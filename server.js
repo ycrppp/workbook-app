@@ -235,6 +235,8 @@ app.post('/api/check-subscription', async (req, res) => {
     return res.status(500).json({ error: 'Telegram not configured' });
   }
 
+  console.log(`[subscription] received user_id=${telegramUser?.id} hash=${telegramUser?.hash?.slice(0,8)}...`);
+
   // Верификация подписи от Telegram Login Widget
   const { hash, ...fields } = telegramUser;
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
@@ -242,11 +244,13 @@ app.post('/api/check-subscription', async (req, res) => {
   const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
   if (expectedHash !== hash) {
+    console.log(`[subscription] hash mismatch — expected=${expectedHash.slice(0,8)} got=${hash?.slice(0,8)}`);
     return res.status(403).json({ error: 'Invalid Telegram auth data' });
   }
 
   // Проверяем, не устарели ли данные (>24 часов)
   if (Date.now() / 1000 - fields.auth_date > 86400) {
+    console.log(`[subscription] auth_date expired`);
     return res.status(403).json({ error: 'Auth data expired' });
   }
 
@@ -256,6 +260,7 @@ app.post('/api/check-subscription', async (req, res) => {
     );
     const data = await response.json();
     const status = data.result?.status;
+    console.log(`[subscription] user_id=${telegramUser.id} status=${status} ok=${data.ok} desc=${data.description || ''}`);
     const subscribed = ['creator', 'administrator', 'member', 'restricted'].includes(status);
     res.json({ subscribed, status: status || 'unknown' });
   } catch (err) {

@@ -509,7 +509,8 @@
     </div>
     <div id="tg-no-sub" style="display:none; margin-bottom:1rem; text-align:center;">
       <div style="font-size:14px; color:var(--text2); margin-bottom:0.75rem;">Воркбук доступен только подписчикам канала</div>
-      <a href="https://t.me/m_cult_members" target="_blank" class="w-cta" style="text-decoration:none; display:inline-block;">Подписаться на канал →</a>
+      <a href="https://t.me/m_cult_members" target="_blank" class="w-cta" style="text-decoration:none; display:inline-block; margin-bottom:0.75rem;">Подписаться на канал →</a>
+      <div><button class="edit-ctx" onclick="retryAuth()">Я подписался — проверить снова</button></div>
     </div>
     <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
     <div class="w-features">
@@ -749,12 +750,17 @@ async function onTelegramAuth(user) {
       openWorkbook();
     } else {
       document.getElementById('tg-no-sub').style.display = 'block';
-      document.getElementById('tg-login-wrap').style.display = 'block';
+      // login widget скрыт — пользователь уже авторизован
     }
   } catch (err) {
     document.getElementById('tg-checking').style.display = 'none';
     document.getElementById('tg-login-wrap').style.display = 'block';
   }
+}
+
+function retryAuth() {
+  document.getElementById('tg-no-sub').style.display = 'none';
+  document.getElementById('tg-login-wrap').style.display = 'block';
 }
 
 // ─── WELCOME → APP ────────────────────────────────────────────────────────────
