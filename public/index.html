@@ -40,8 +40,6 @@
         --success: #6abf6a;
       }
 
-      .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
-      .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
     }
 
     body {
@@ -385,6 +383,11 @@
     }
     .badge-current { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-mid); }
     .badge-done { background: #e8f5e8; color: var(--success); border: 1px solid #c3d9c3; }
+
+    @media (prefers-color-scheme: dark) {
+      .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
+      .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
+    }
     .badge-locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
 
     /* CONTEXT TAGS */
@@ -649,7 +652,7 @@
 
       <div class="nav">
         <button class="edit-ctx" onclick="goStep(2)">← Изменить контекст</button>
-        <button class="btn primary" onclick="openModule('gaps')">Начать модуль 1 →</button>
+        <button class="btn primary" id="start-next-btn" onclick="openModule('gaps')">Начать модуль 1 →</button>
       </div>
     </div>
 
@@ -713,13 +716,41 @@
 
 <script>
 // ─── STATE ────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'workbook_state_v1';
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return null;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      role: state.role, size: state.size, biz: state.biz, pain: state.pain,
+      correction: state.correction,
+      sessionId: state.sessionId,
+      completedModules: state.completedModules,
+      answers: state.answers,
+      exerciseCache: state.exerciseCache,
+    }));
+  } catch (e) {}
+}
+
+const _saved = loadState();
 const state = {
-  role: '', size: '', biz: '', pain: '',
-  correction: '',
-  sessionId: 'session_' + Math.random().toString(36).slice(2),
+  role: _saved?.role || '',
+  size: _saved?.size || '',
+  biz: _saved?.biz || '',
+  pain: _saved?.pain || '',
+  correction: _saved?.correction || '',
+  sessionId: _saved?.sessionId || 'session_' + Math.random().toString(36).slice(2),
   currentModule: null,
-  completedModules: [],
-  answers: {},
+  completedModules: _saved?.completedModules || [],
+  answers: _saved?.answers || {},
+  exerciseCache: _saved?.exerciseCache || {},
 };
 
 const MODULE_ORDER = ['gaps', 'intent', 'cascade', 'independence'];
@@ -832,6 +863,7 @@ async function submitOnboarding() {
 // ─── CONFIRM CONTEXT ──────────────────────────────────────────────────────────
 function confirmContext() {
   state.correction = document.getElementById('s2-correction')?.value.trim() || '';
+  saveState();
   buildCtxTags('ctx-tags');
   buildCtxTags('mod-ctx-tags');
   goStep(3);
@@ -857,6 +889,14 @@ function buildCtxTags(containerId) {
 async function openModule(moduleId, regenCorrection) {
   state.currentModule = moduleId;
   hideRegenForm();
+
+  // Используем кэш если есть и пересоздание не запрошено
+  if (!regenCorrection && state.exerciseCache[moduleId]) {
+    renderModule(state.exerciseCache[moduleId]);
+    goStep(5);
+    return;
+  }
+
   goStep(4);
 
   const previousAnswers = state.answers[moduleId] || {};
@@ -877,6 +917,10 @@ async function openModule(moduleId, regenCorrection) {
     if (!resp.ok) throw new Error('Ошибка сервера: ' + resp.status);
     const data = await resp.json();
     if (!data.success) throw new Error(data.error || 'Неизвестная ошибка');
+
+    // Сохраняем в кэш
+    state.exerciseCache[moduleId] = data;
+    saveState();
 
     renderModule(data);
     goStep(5);
@@ -928,6 +972,7 @@ async function saveAnswer(exId, value) {
   if (!value.trim()) return;
   if (!state.answers[state.currentModule]) state.answers[state.currentModule] = {};
   state.answers[state.currentModule][exId] = value;
+  saveState();
 
   const savedEl = document.getElementById('saved-' + exId);
   if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
@@ -958,6 +1003,7 @@ function completeModule() {
   if (!state.completedModules.includes(moduleId)) {
     state.completedModules.push(moduleId);
   }
+  saveState();
   updateModuleList();
   goStep(3);
 }
@@ -997,6 +1043,22 @@ function updateModuleList() {
       item.querySelector('.module-sub').textContent = `Открывается после модуля ${i}`;
     }
   });
+
+  // Обновляем кнопку внизу — следующий доступный модуль
+  const nextModIdx = MODULE_ORDER.findIndex(id => !doneSet.has(id));
+  const btn = document.getElementById('start-next-btn');
+  if (btn) {
+    if (nextModIdx === -1) {
+      btn.textContent = 'Все модули пройдены ✓';
+      btn.disabled = true;
+      btn.onclick = null;
+    } else {
+      const nextId = MODULE_ORDER[nextModIdx];
+      btn.textContent = `Начать модуль ${nextModIdx + 1} →`;
+      btn.onclick = () => openModule(nextId);
+      btn.disabled = false;
+    }
+  }
 }
 
 // ─── REGEN WITH CORRECTION ────────────────────────────────────────────────────
@@ -1019,6 +1081,32 @@ async function regenWithCorrection() {
   const correction = document.getElementById('regen-correction').value.trim();
   if (!correction) return;
   await openModule(state.currentModule, correction);
+}
+
+// ─── RESTORE STATE ON LOAD ────────────────────────────────────────────────────
+if (_saved && (_saved.biz || _saved.pain)) {
+  const wp = document.getElementById('welcome-page');
+  const app = document.getElementById('app');
+  wp.style.display = 'none';
+  app.classList.add('visible');
+
+  if (state.role) {
+    document.querySelectorAll('#role-chips .chip').forEach(c => {
+      if (c.textContent.trim() === state.role) c.classList.add('selected');
+    });
+  }
+  if (state.size) {
+    document.querySelectorAll('#size-chips .chip').forEach(c => {
+      if (c.textContent.trim() === state.size) c.classList.add('selected');
+    });
+  }
+  document.getElementById('biz').value = state.biz || '';
+  document.getElementById('pain').value = state.pain || '';
+
+  buildCtxTags('ctx-tags');
+  buildCtxTags('mod-ctx-tags');
+  updateModuleList();
+  goStep(3);
 }
 </script>
 </body>
