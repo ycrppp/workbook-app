@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Воркбук — Искусство действия</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f7f6f3;
+      --bg3: #f0efe9;
+      --text: #1a1a1a;
+      --text2: #555;
+      --text3: #999;
+      --border: #e0ddd6;
+      --border2: #ccc;
+      --accent: #1a3a5c;
+      --accent-light: #d6e4f0;
+      --accent-mid: #2e75b6;
+      --success: #2d6a2d;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --bg2: #242424;
+        --bg3: #2e2e2e;
+        --text: #f0efe9;
+        --text2: #aaa;
+        --text3: #666;
+        --border: #3a3a3a;
+        --border2: #555;
+        --accent: #2e75b6;
+        --accent-light: #1a2d3f;
+        --accent-mid: #5aa0d8;
+        --success: #6abf6a;
+      }
+
+      .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
+      .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════
+       WELCOME PAGE — full-screen overlay
+    ═══════════════════════════════════════════ */
+    #welcome-page {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      z-index: 100;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    #welcome-page.hiding {
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+    }
+
+    .w-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text3);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      margin-bottom: 2.25rem;
+    }
+    .w-badge em { color: var(--accent-mid); font-style: normal; }
+
+    .w-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--accent-light);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 2px 12px rgba(46,117,182,0.15);
+    }
+
+    .w-title {
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.25;
+      margin-bottom: 0.85rem;
+      max-width: 440px;
+    }
+
+    .w-sub {
+      font-size: 16px;
+      color: var(--text2);
+      text-align: center;
+      line-height: 1.7;
+      max-width: 460px;
+      margin-bottom: 2.5rem;
+    }
+
+    .w-cta {
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-bottom: 0.85rem;
+      letter-spacing: 0.01em;
+    }
+    .w-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+    .w-cta:active { transform: translateY(0); }
+
+    .w-hint {
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .w-features {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 560px;
+    }
+    .w-feat {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      text-align: left;
+      flex: 1;
+      min-width: 160px;
+      max-width: 180px;
+    }
+    .wf-icon { font-size: 18px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .wf-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .wf-sub { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+    @media (max-width: 480px) {
+      .w-title { font-size: 24px; }
+      .w-sub { font-size: 15px; }
+      .w-features { flex-direction: column; align-items: stretch; }
+      .w-feat { max-width: 100%; }
+    }
+
+    /* ═══════════════════════════════════════════
+       WORKBOOK APP
+    ═══════════════════════════════════════════ */
+    #app {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease 0.1s, transform 0.4s ease 0.1s;
+    }
+    #app.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* PROGRESS */
+    .progress-wrap { margin-bottom: 2rem; }
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+    .progress-label {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 6px;
+    }
+
+    /* STEPS */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    /* TYPOGRAPHY */
+    .page-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .page-sub {
+      font-size: 15px;
+      color: var(--text2);
+      margin-bottom: 2rem;
+      line-height: 1.65;
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 10px;
+      margin-top: 1.5rem;
+    }
+
+    /* CHIPS */
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--border2); color: var(--text); }
+    .chip.selected {
+      background: var(--accent-light);
+      border-color: var(--accent-mid);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* INPUTS */
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 13px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      resize: none;
+      outline: none;
+      transition: border-color 0.15s;
+      line-height: 1.6;
+    }
+    textarea:focus, input[type="text"]:focus { border-color: var(--accent-mid); }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn:hover { background: var(--bg2); }
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn.primary:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* QUOTE */
+    .quote-block {
+      border-left: 3px solid var(--accent-mid);
+      padding: 12px 16px;
+      margin-bottom: 1.5rem;
+      background: var(--bg2);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .quote-text {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.65;
+      font-style: italic;
+    }
+    .quote-cite { font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+    /* EXERCISE BLOCK */
+    .ex-block {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .ex-header {
+      padding: 11px 16px;
+      background: var(--bg2);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .ex-body { padding: 16px; }
+    .ex-instruction {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 12px;
+      white-space: pre-line;
+    }
+    .ex-answer { min-height: 120px; }
+    .ex-saved {
+      font-size: 12px;
+      color: var(--success);
+      margin-top: 6px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .ex-saved.show { opacity: 1; }
+
+    /* MODULE NAV */
+    .module-list { display: flex; flex-direction: column; gap: 10px; }
+    .module-item {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .module-item:hover:not(.locked) { border-color: var(--border2); background: var(--bg2); }
+    .module-item.locked { opacity: 0.4; cursor: default; }
+    .module-item.current { border-color: var(--accent-mid); background: var(--accent-light); }
+    .module-item.done { border-color: #c3d9c3; background: #f3faf3; }
+    .module-name { font-size: 14px; font-weight: 500; color: var(--text); }
+    .module-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+    .module-badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .badge-current { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-mid); }
+    .badge-done { background: #e8f5e8; color: var(--success); border: 1px solid #c3d9c3; }
+    .badge-locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+
+    /* CONTEXT TAGS */
+    .ctx-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+    .ctx-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      background: var(--bg2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .ctx-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+
+    /* SKELETON */
+    .skeleton {
+      background: var(--bg3);
+      border-radius: 4px;
+      height: 14px;
+      margin-bottom: 8px;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .sk-w90 { width: 90%; }
+    .sk-w70 { width: 70%; }
+    .sk-w55 { width: 55%; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+
+    /* LOADING */
+    .loading-state { padding: 2rem 0; }
+    .loading-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .loading-sub { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ERROR */
+    .error-box {
+      padding: 12px 16px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: #b91c1c;
+      margin-top: 1rem;
+      line-height: 1.6;
+    }
+
+    /* AI BADGE */
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 1.25rem;
+    }
+
+    /* INTRO BOX */
+    .intro-box {
+      padding: 14px 16px;
+      background: var(--accent-light);
+      border: 1px solid var(--accent-mid);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.65;
+      margin-bottom: 1.5rem;
+      white-space: pre-line;
+    }
+
+    /* EDIT CONTEXT LINK */
+    .edit-ctx {
+      font-size: 13px;
+      color: var(--text3);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .edit-ctx:hover { color: var(--text2); }
+
+    @media (max-width: 480px) {
+      #app { padding: 1.25rem 1rem 3rem; }
+      .page-title { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       WELCOME PAGE (full-screen)
+  ══════════════════════════════════════════ -->
+  <div id="welcome-page">
+    <div class="w-badge">Воркбук · <em>Стивен Бангей</em></div>
+    <div class="w-icon">📖</div>
+    <div class="w-title">Искусство действия</div>
+    <div class="w-sub">Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом.</div>
+
+    <div id="tg-login-wrap">
+      <script async src="https://telegram.org/js/telegram-widget.js?22"
+        data-telegram-login="wrkbook_bot"
+        data-size="large"
+        data-onauth="onTelegramAuth(user)"
+        data-request-access="write">
+      </script>
+    </div>
+    <div id="tg-checking" style="display:none; font-size:14px; color:var(--text2); margin-bottom:1rem;">
+      <span class="spinner"></span> Проверяю подписку...
+    </div>
+    <div id="tg-no-sub" style="display:none; margin-bottom:1rem; text-align:center;">
+      <div style="font-size:14px; color:var(--text2); margin-bottom:0.75rem;">Воркбук доступен только подписчикам канала</div>
+      <a href="https://t.me/m_cult_members" target="_blank" class="w-cta" style="text-decoration:none; display:inline-block;">Подписаться на канал →</a>
+    </div>
+    <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
+    <div class="w-features">
+      <div class="w-feat">
+        <div class="wf-icon">🎯</div>
+        <div>
+          <div class="wf-title">Персонализация</div>
+          <div class="wf-sub">Каждое упражнение пишется под вашу роль и ситуацию</div>
+        </div>
+      </div>
+      <div class="w-feat">
+        <div class="wf-icon">⚡</div>
+        <div>
+          <div class="wf-title">AI-генерация</div>
+          <div class="wf-sub">Упражнения создаются мгновенно — не из банка заданий</div>
+        </div>
+      </div>
+      <div class="w-feat">
+        <div class="wf-icon">🔓</div>
+        <div>
+          <div class="wf-title">Прогрессия</div>
+          <div class="wf-sub">Модули открываются последовательно, каждый строится на предыдущем</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       WORKBOOK APP
+  ══════════════════════════════════════════ -->
+  <div id="app">
+
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="prog" style="width: 10%"></div>
+      </div>
+      <div class="progress-label" id="prog-label">Шаг 1 из 5</div>
+    </div>
+
+    <!-- ── STEP 1: ONBOARDING ─────────────────────────────────── -->
+    <div class="step active" id="s1">
+      <div class="page-title">Настройка воркбука</div>
+      <div class="page-sub">Расскажите о себе — все упражнения будут написаны под вашу конкретную ситуацию, а не про абстрактного менеджера.</div>
+
+      <div class="section-label">Кто вы</div>
+      <div class="chip-row" id="role-chips">
+        <span class="chip" onclick="pick(this,'role')">Фаундер / CEO</span>
+        <span class="chip" onclick="pick(this,'role')">Руководитель отдела</span>
+        <span class="chip" onclick="pick(this,'role')">Менеджер проекта</span>
+        <span class="chip" onclick="pick(this,'role')">Фрилансер</span>
+        <span class="chip" onclick="pick(this,'role')">Другое</span>
+      </div>
+
+      <div class="section-label">Размер команды</div>
+      <div class="chip-row" id="size-chips">
+        <span class="chip" onclick="pick(this,'size')">Только я</span>
+        <span class="chip" onclick="pick(this,'size')">2–5</span>
+        <span class="chip" onclick="pick(this,'size')">6–15</span>
+        <span class="chip" onclick="pick(this,'size')">16–50</span>
+        <span class="chip" onclick="pick(this,'size')">50+</span>
+      </div>
+
+      <div class="section-label">Чем занимаетесь</div>
+      <textarea rows="2" id="biz" placeholder="Например: digital-агентство, influence marketing, клиенты — онлайн-образование..."></textarea>
+
+      <div class="section-label">Главная боль прямо сейчас</div>
+      <textarea rows="3" id="pain" placeholder="Например: всё замыкается на мне, команда не принимает решений самостоятельно, планы расходятся с результатами..."></textarea>
+
+      <div id="s1-error"></div>
+
+      <div class="nav">
+        <span class="ai-badge"><span class="ctx-dot"></span> Ответы используются только для персонализации</span>
+        <button class="btn primary" onclick="submitOnboarding()">Создать воркбук →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: CONTEXT CONFIRMATION ─────────────────────── -->
+    <div class="step" id="s2">
+      <div id="s2-loading" class="loading-state">
+        <div class="loading-title"><span class="spinner"></span> Анализирую контекст...</div>
+        <div class="loading-sub">Проверяю, правильно ли понял вашу ситуацию.</div>
+        <div class="skeleton sk-w90"></div>
+        <div class="skeleton sk-w70"></div>
+        <div class="skeleton sk-w55"></div>
+      </div>
+      <div id="s2-content" style="display:none">
+        <div class="page-title">Проверьте контекст</div>
+        <div class="page-sub">Вот как я понял вашу ситуацию. Если что-то неверно — уточните перед началом, чтобы упражнения точно попали в цель.</div>
+        <div class="intro-box" id="s2-summary"></div>
+        <div class="section-label">Хотите добавить уточнение?</div>
+        <textarea rows="3" id="s2-correction" placeholder="Например: работаю удалённо, команда в трёх городах, основные клиенты — B2B..."></textarea>
+        <div class="nav">
+          <button class="btn" onclick="goStep(1)">← Изменить анкету</button>
+          <button class="btn primary" onclick="confirmContext()">Сохранить и начать →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: MODULE MAP ─────────────────────────────────── -->
+    <div class="step" id="s3">
+      <div class="page-title">Ваш план</div>
+      <div class="page-sub" id="s2-sub">Воркбук по книге «Искусство действия» — 4 модуля, каждый про вашу конкретную ситуацию.</div>
+
+      <div class="ctx-row" id="ctx-tags"></div>
+
+      <div class="module-list" id="module-list">
+        <div class="module-item current" onclick="openModule('gaps')">
+          <div>
+            <div class="module-name">Модуль 1 — Три разрыва</div>
+            <div class="module-sub">Почему стратегии не работают</div>
+          </div>
+          <span class="module-badge badge-current">Начать</span>
+        </div>
+        <div class="module-item locked">
+          <div>
+            <div class="module-name">Модуль 2 — Направленный оппортунизм</div>
+            <div class="module-sub">Открывается после модуля 1</div>
+          </div>
+          <span class="module-badge badge-locked">Закрыт</span>
+        </div>
+        <div class="module-item locked">
+          <div>
+            <div class="module-name">Модуль 3 — Каскад целей</div>
+            <div class="module-sub">Открывается после модуля 2</div>
+          </div>
+          <span class="module-badge badge-locked">Закрыт</span>
+        </div>
+        <div class="module-item locked">
+          <div>
+            <div class="module-name">Модуль 4 — Независимое мышление</div>
+            <div class="module-sub">Открывается после модуля 3</div>
+          </div>
+          <span class="module-badge badge-locked">Закрыт</span>
+        </div>
+      </div>
+
+      <div class="nav">
+        <button class="edit-ctx" onclick="goStep(2)">← Изменить контекст</button>
+        <button class="btn primary" onclick="openModule('gaps')">Начать модуль 1 →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: LOADING MODULE ─────────────────────────────── -->
+    <div class="step" id="s4">
+      <div class="loading-state">
+        <div class="loading-title"><span class="spinner"></span> Генерирую упражнения...</div>
+        <div class="loading-sub">Адаптирую под ваш контекст через AI — это займёт несколько секунд.</div>
+        <div class="ex-block">
+          <div class="ex-header">Загрузка модуля...</div>
+          <div class="ex-body">
+            <div class="skeleton sk-w90"></div>
+            <div class="skeleton sk-w70"></div>
+            <div class="skeleton sk-w55"></div>
+            <div style="height:10px"></div>
+            <div class="skeleton sk-w90"></div>
+            <div class="skeleton sk-w70"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: MODULE EXERCISES ──────────────────────────── -->
+    <div class="step" id="s5">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+        <div class="page-title" id="mod-title" style="margin-bottom:0">Модуль 1</div>
+        <button class="edit-ctx" onclick="goStep(3)">← К плану</button>
+      </div>
+
+      <div class="ctx-row" id="mod-ctx-tags"></div>
+
+      <div class="intro-box" id="mod-intro"></div>
+
+      <div class="quote-block">
+        <div class="quote-text" id="mod-quote"></div>
+        <div class="quote-cite" id="mod-cite">— Стивен Бангей</div>
+      </div>
+
+      <div class="ai-badge"><span class="ctx-dot"></span> Упражнения адаптированы под ваш контекст</div>
+
+      <div id="exercises-container"></div>
+
+      <div id="regen-wrap" style="margin-top:1rem; margin-bottom:0.5rem;">
+        <button class="edit-ctx" onclick="toggleRegenForm()">↺ Упражнения не попали в точку — пересоздать</button>
+        <div id="regen-form" style="display:none; margin-top:12px;">
+          <div class="section-label">Что понято неверно?</div>
+          <textarea rows="3" id="regen-correction" placeholder="Например: я не продаю через соцсети, работаю только B2B через тендеры..."></textarea>
+          <button class="btn primary" style="margin-top:10px" onclick="regenWithCorrection()">Пересоздать упражнения →</button>
+        </div>
+      </div>
+
+      <div id="s5-error"></div>
+
+      <div class="nav">
+        <button class="btn" onclick="goStep(3)">← К плану</button>
+        <button class="btn primary" id="next-mod-btn" onclick="completeModule()" disabled>Сохранить и продолжить →</button>
+      </div>
+    </div>
+
+  </div><!-- /#app -->
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const state = {
+  role: '', size: '', biz: '', pain: '',
+  correction: '',
+  sessionId: 'session_' + Math.random().toString(36).slice(2),
+  currentModule: null,
+  completedModules: [],
+  answers: {},
+};
+
+const MODULE_ORDER = ['gaps', 'intent', 'cascade', 'independence'];
+const MODULE_NAMES = {
+  gaps: 'Три разрыва',
+  intent: 'Направленный оппортунизм',
+  cascade: 'Каскад целей',
+  independence: 'Независимое мышление',
+};
+
+// ─── TELEGRAM AUTH ────────────────────────────────────────────────────────────
+async function onTelegramAuth(user) {
+  document.getElementById('tg-login-wrap').style.display = 'none';
+  document.getElementById('tg-no-sub').style.display = 'none';
+  document.getElementById('tg-checking').style.display = 'block';
+
+  try {
+    const resp = await fetch('/api/check-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegramUser: user }),
+    });
+    const data = await resp.json();
+
+    document.getElementById('tg-checking').style.display = 'none';
+
+    if (data.subscribed) {
+      openWorkbook();
+    } else {
+      document.getElementById('tg-no-sub').style.display = 'block';
+      document.getElementById('tg-login-wrap').style.display = 'block';
+    }
+  } catch (err) {
+    document.getElementById('tg-checking').style.display = 'none';
+    document.getElementById('tg-login-wrap').style.display = 'block';
+  }
+}
+
+// ─── WELCOME → APP ────────────────────────────────────────────────────────────
+function openWorkbook() {
+  const wp = document.getElementById('welcome-page');
+  const app = document.getElementById('app');
+  wp.classList.add('hiding');
+  setTimeout(() => {
+    wp.style.display = 'none';
+    app.classList.add('visible');
+  }, 400);
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  const pct = { 1: 10, 2: 28, 3: 50, 4: 68, 5: 88 };
+  if (pct[n]) document.getElementById('prog').style.width = pct[n] + '%';
+  const labels = { 1: 'Шаг 1 из 5', 2: 'Шаг 2 из 5', 3: 'Шаг 3 из 5', 4: 'Загрузка...', 5: 'Упражнения' };
+  if (labels[n]) document.getElementById('prog-label').textContent = labels[n];
+  window.scrollTo(0, 0);
+}
+
+// ─── CHIPS ────────────────────────────────────────────────────────────────────
+function pick(el, group) {
+  document.querySelectorAll('#' + group + '-chips .chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state[group] = el.textContent.trim();
+}
+
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+async function submitOnboarding() {
+  state.biz = document.getElementById('biz').value.trim();
+  state.pain = document.getElementById('pain').value.trim();
+
+  if (!state.pain && !state.biz) {
+    document.getElementById('s1-error').innerHTML =
+      '<div class="error-box">Опишите хотя бы вашу ситуацию или главную боль — без этого персонализация не сработает.</div>';
+    return;
+  }
+  document.getElementById('s1-error').innerHTML = '';
+
+  // Показываем шаг загрузки контекста
+  goStep(2);
+  document.getElementById('s2-loading').style.display = '';
+  document.getElementById('s2-content').style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/context-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
+      }),
+    });
+    const data = await resp.json();
+    document.getElementById('s2-summary').textContent = data.summary || '';
+  } catch (err) {
+    // Если не удалось — пропускаем шаг подтверждения
+    confirmContext();
+    return;
+  }
+
+  document.getElementById('s2-loading').style.display = 'none';
+  document.getElementById('s2-content').style.display = '';
+}
+
+// ─── CONFIRM CONTEXT ──────────────────────────────────────────────────────────
+function confirmContext() {
+  state.correction = document.getElementById('s2-correction')?.value.trim() || '';
+  buildCtxTags('ctx-tags');
+  buildCtxTags('mod-ctx-tags');
+  goStep(3);
+}
+
+function buildCtxTags(containerId) {
+  const row = document.getElementById(containerId);
+  if (!row) return;
+  row.innerHTML = '';
+  const items = [
+    state.role || null,
+    state.size ? 'Команда: ' + state.size : null,
+  ].filter(Boolean);
+  items.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'ctx-tag';
+    el.innerHTML = '<span class="ctx-dot"></span>' + t;
+    row.appendChild(el);
+  });
+}
+
+// ─── OPEN MODULE ──────────────────────────────────────────────────────────────
+async function openModule(moduleId, regenCorrection) {
+  state.currentModule = moduleId;
+  hideRegenForm();
+  goStep(4);
+
+  const previousAnswers = state.answers[moduleId] || {};
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
+        moduleId,
+        bookId: 'bangey',
+        previousAnswers,
+        correction: regenCorrection || state.correction || '',
+      }),
+    });
+
+    if (!resp.ok) throw new Error('Ошибка сервера: ' + resp.status);
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Неизвестная ошибка');
+
+    renderModule(data);
+    goStep(5);
+
+  } catch (err) {
+    document.getElementById('s5-error').innerHTML =
+      '<div class="error-box">Не удалось загрузить упражнения: ' + err.message + '</div>';
+    goStep(5);
+  }
+}
+
+// ─── RENDER MODULE ────────────────────────────────────────────────────────────
+function renderModule(data) {
+  document.getElementById('mod-title').textContent = 'Модуль — ' + (MODULE_NAMES[state.currentModule] || '');
+  document.getElementById('mod-intro').textContent = data.intro || '';
+  document.getElementById('mod-quote').textContent = '"' + (data.quote || '') + '"';
+
+  const container = document.getElementById('exercises-container');
+  container.innerHTML = '';
+
+  if (!state.answers[state.currentModule]) state.answers[state.currentModule] = {};
+
+  ['ex1', 'ex2', 'ex3'].forEach((exId, i) => {
+    const ex = data[exId];
+    if (!ex) return;
+
+    const savedVal = state.answers[state.currentModule][exId] || '';
+
+    const block = document.createElement('div');
+    block.className = 'ex-block';
+    block.innerHTML = `
+      <div class="ex-header">Упражнение ${i + 1} — ${ex.title}</div>
+      <div class="ex-body">
+        <div class="ex-instruction">${ex.instruction}</div>
+        <textarea class="ex-answer" rows="5" placeholder="Напишите ответ здесь..." id="ans-${exId}"
+          onblur="saveAnswer('${exId}', this.value)"
+          oninput="checkAllAnswered()">${savedVal}</textarea>
+        <div class="ex-saved" id="saved-${exId}">✓ Сохранено</div>
+      </div>
+    `;
+    container.appendChild(block);
+  });
+
+  checkAllAnswered();
+}
+
+// ─── SAVE ANSWER ──────────────────────────────────────────────────────────────
+async function saveAnswer(exId, value) {
+  if (!value.trim()) return;
+  if (!state.answers[state.currentModule]) state.answers[state.currentModule] = {};
+  state.answers[state.currentModule][exId] = value;
+
+  const savedEl = document.getElementById('saved-' + exId);
+  if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
+
+  fetch('/api/answer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: state.sessionId,
+      moduleId: state.currentModule,
+      exerciseId: exId,
+      answer: value,
+    }),
+  }).catch(() => {});
+}
+
+function checkAllAnswered() {
+  const answers = ['ex1', 'ex2', 'ex3'].map(id => {
+    const el = document.getElementById('ans-' + id);
+    return el && el.value.trim().length > 10;
+  });
+  document.getElementById('next-mod-btn').disabled = !answers.every(Boolean);
+}
+
+// ─── COMPLETE MODULE ──────────────────────────────────────────────────────────
+function completeModule() {
+  const moduleId = state.currentModule;
+  if (!state.completedModules.includes(moduleId)) {
+    state.completedModules.push(moduleId);
+  }
+  updateModuleList();
+  goStep(3);
+}
+
+function updateModuleList() {
+  const list = document.getElementById('module-list');
+  const items = list.querySelectorAll('.module-item');
+  const doneSet = new Set(state.completedModules);
+
+  MODULE_ORDER.forEach((modId, i) => {
+    const item = items[i];
+    if (!item) return;
+    const isDone = doneSet.has(modId);
+    const isNext = !isDone && (i === 0 || doneSet.has(MODULE_ORDER[i - 1]));
+
+    item.classList.remove('locked', 'current', 'done');
+    const badge = item.querySelector('.module-badge');
+    badge.classList.remove('badge-current', 'badge-done', 'badge-locked');
+
+    if (isDone) {
+      item.classList.add('done');
+      badge.className = 'module-badge badge-done';
+      badge.textContent = '✓ Готово';
+      item.onclick = () => openModule(modId);
+      item.querySelector('.module-sub').textContent = 'Нажмите чтобы повторить';
+    } else if (isNext) {
+      item.classList.add('current');
+      badge.className = 'module-badge badge-current';
+      badge.textContent = 'Начать';
+      item.onclick = () => openModule(modId);
+      item.querySelector('.module-sub').textContent = 'Доступен';
+    } else {
+      item.classList.add('locked');
+      badge.className = 'module-badge badge-locked';
+      badge.textContent = 'Закрыт';
+      item.onclick = null;
+      item.querySelector('.module-sub').textContent = `Открывается после модуля ${i}`;
+    }
+  });
+}
+
+// ─── REGEN WITH CORRECTION ────────────────────────────────────────────────────
+function toggleRegenForm() {
+  const form = document.getElementById('regen-form');
+  const isHidden = form.style.display === 'none' || form.style.display === '';
+  form.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) form.querySelector('textarea').focus();
+}
+
+function hideRegenForm() {
+  const form = document.getElementById('regen-form');
+  if (form) {
+    form.style.display = 'none';
+    form.querySelector('textarea').value = '';
+  }
+}
+
+async function regenWithCorrection() {
+  const correction = document.getElementById('regen-correction').value.trim();
+  if (!correction) return;
+  await openModule(state.currentModule, correction);
+}
+</script>
+</body>
+</html>
