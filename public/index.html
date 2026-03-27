@@ -482,6 +482,113 @@
     }
     .edit-ctx:hover { color: var(--text2); }
 
+    /* ═══════════════════════════════════════════
+       MODAL
+    ═══════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      padding: 1.5rem;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.5rem 1.5rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      width: 28px; height: 28px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text2);
+      font-family: inherit;
+    }
+    .modal-close:hover { background: var(--bg3); }
+    .modal-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      margin-bottom: 1rem;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      padding-right: 2rem;
+    }
+    .modal-body {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.75;
+    }
+    .modal-body p { margin-bottom: 0.85rem; }
+    .modal-body p:last-child { margin-bottom: 0; }
+    .modal-body strong { color: var(--text); font-weight: 600; }
+    .modal-body ul { padding-left: 1.25rem; margin-bottom: 0.85rem; }
+    .modal-body ul li { margin-bottom: 0.4rem; }
+    .modal-section {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .modal-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text3);
+      margin-bottom: 0.6rem;
+    }
+
+    /* INFO BUTTON */
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text3);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-family: inherit;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .info-btn:hover { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); }
+
     @media (max-width: 480px) {
       #app { padding: 1.25rem 1rem 3rem; }
       .page-title { font-size: 19px; }
@@ -489,6 +596,16 @@
   </style>
 </head>
 <body>
+
+  <!-- ══════════════════════════════════════════
+       MODAL
+  ══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════
        WELCOME PAGE (full-screen)
@@ -516,6 +633,7 @@
       <div><button class="edit-ctx" onclick="retryAuth()">Я подписался — проверить снова</button></div>
     </div>
     <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
+    <button class="edit-ctx" style="margin-top:0.5rem" onclick="openModal('book')">Что за книга? →</button>
     <div class="w-features">
       <div class="w-feat">
         <div class="wf-icon">🎯</div>
@@ -621,30 +739,42 @@
 
       <div class="module-list" id="module-list">
         <div class="module-item current" onclick="openModule('gaps')">
-          <div>
-            <div class="module-name">Модуль 1 — Три разрыва</div>
-            <div class="module-sub">Почему стратегии не работают</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>
+              <div class="module-name">Модуль 1 — Три разрыва</div>
+              <div class="module-sub">Почему стратегии не работают</div>
+            </div>
+            <button class="info-btn" onclick="event.stopPropagation();openModal('gaps')" title="О концепции">i</button>
           </div>
           <span class="module-badge badge-current">Начать</span>
         </div>
         <div class="module-item locked">
-          <div>
-            <div class="module-name">Модуль 2 — Направленный оппортунизм</div>
-            <div class="module-sub">Открывается после модуля 1</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>
+              <div class="module-name">Модуль 2 — Направленный оппортунизм</div>
+              <div class="module-sub">Открывается после модуля 1</div>
+            </div>
+            <button class="info-btn" onclick="event.stopPropagation();openModal('intent')" title="О концепции">i</button>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
         <div class="module-item locked">
-          <div>
-            <div class="module-name">Модуль 3 — Каскад целей</div>
-            <div class="module-sub">Открывается после модуля 2</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>
+              <div class="module-name">Модуль 3 — Каскад целей</div>
+              <div class="module-sub">Открывается после модуля 2</div>
+            </div>
+            <button class="info-btn" onclick="event.stopPropagation();openModal('cascade')" title="О концепции">i</button>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
         <div class="module-item locked">
-          <div>
-            <div class="module-name">Модуль 4 — Независимое мышление</div>
-            <div class="module-sub">Открывается после модуля 3</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>
+              <div class="module-name">Модуль 4 — Независимое мышление</div>
+              <div class="module-sub">Открывается после модуля 3</div>
+            </div>
+            <button class="info-btn" onclick="event.stopPropagation();openModal('independence')" title="О концепции">i</button>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
@@ -691,7 +821,10 @@
         <div class="quote-cite" id="mod-cite">— Стивен Бангей</div>
       </div>
 
-      <div class="ai-badge"><span class="ctx-dot"></span> Упражнения адаптированы под ваш контекст</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div class="ai-badge" style="margin-bottom:0"><span class="ctx-dot"></span> Упражнения адаптированы под ваш контекст</div>
+        <button class="info-btn" style="width:auto;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500;" onclick="openModal(state.currentModule)">📖 Концепция</button>
+      </div>
 
       <div id="exercises-container"></div>
 
@@ -715,6 +848,123 @@
   </div><!-- /#app -->
 
 <script>
+// ─── MODAL DATA ───────────────────────────────────────────────────────────────
+const MODAL_CONTENT = {
+  book: {
+    tag: 'О книге',
+    title: '«Искусство действия» — Стивен Бангей',
+    body: `<p>Стивен Бангей — бизнес-стратег и военный историк. В этой книге он берёт военную доктрину прусской армии XIX века и показывает, как она работает в современном бизнесе.</p>
+<p>Главная идея: <strong>между стратегией и результатом всегда есть разрывы</strong> — и большинство менеджеров реагируют на них неправильными инструментами, которые только усугубляют ситуацию.</p>
+<p>Решение Бангея — <strong>направленный оппортунизм</strong>: дать людям ясный замысел и свободу действовать по ситуации, вместо подробных инструкций и жёсткого контроля.</p>
+<div class="modal-section">
+  <div class="modal-section-title">Четыре модуля воркбука</div>
+  <ul>
+    <li><strong>Три разрыва</strong> — почему планы расходятся с реальностью</li>
+    <li><strong>Направленный оппортунизм</strong> — замысел вместо инструкций</li>
+    <li><strong>Каскад целей</strong> — как передавать смысл вниз по команде</li>
+    <li><strong>Независимое мышление</strong> — культура инициативы и доверия</li>
+  </ul>
+</div>`
+  },
+  gaps: {
+    tag: 'Модуль 1',
+    title: 'Три разрыва',
+    body: `<p>Бангей описывает три системных разрыва, которые существуют в любой организации — между стратегией и результатом.</p>
+<div class="modal-section">
+  <div class="modal-section-title">Разрыв в знаниях</div>
+  <p>Руководство никогда не знает всего, что хотело бы знать. <strong>Типичная ошибка</strong>: собирать больше данных и ждать полной картины. Бангей: полной картины не будет — нужно действовать с тем, что есть.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Разрыв в согласованности</div>
+  <p>Люди делают не то, что имел в виду руководитель. <strong>Типичная ошибка</strong>: писать подробные инструкции. Бангей: инструкции устаревают быстрее, чем их выполняют.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Разрыв в результатах</div>
+  <p>Действия есть, эффекта нет. <strong>Типичная ошибка</strong>: давить и мотивировать. Бангей: люди стараются изо всех сил, просто не в том направлении — потому что не понимают замысла.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Ключевая идея</div>
+  <p>Стандартные реакции (больше данных, больше инструкций, больше давления) создают <strong>трение</strong> — они не закрывают разрывы, а создают новые.</p>
+</div>`
+  },
+  intent: {
+    tag: 'Модуль 2',
+    title: 'Направленный оппортунизм',
+    body: `<p>Центральная концепция книги. Вместо жёсткого плана или полного хаоса — третий путь: ясный замысел и свобода исполнения.</p>
+<div class="modal-section">
+  <div class="modal-section-title">Что такое замысел</div>
+  <p>Замысел отвечает на вопросы: <strong>что достичь и зачем</strong>. Не как именно. Он остаётся стабильным, когда меняются обстоятельства. В отличие от инструкции, которая описывает шаги в конкретных условиях — и устаревает при первом изменении ситуации.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Структура замысла по Бангею</div>
+  <ul>
+    <li><strong>Высший замысел</strong> — зачем это нужно организации</li>
+    <li><strong>Собственная задача</strong> — что конкретно сделать</li>
+    <li><strong>Ключевые действия</strong> — главное для её выполнения</li>
+    <li><strong>Ограничения</strong> — чего делать нельзя</li>
+    <li><strong>Свобода действий</strong> — в каких рамках решать самому</li>
+  </ul>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Ключевая идея</div>
+  <p>Чем понятнее замысел — тем меньше нужен контроль. Люди принимают правильные решения не потому что им сказали что делать, а потому что понимают зачем.</p>
+</div>`
+  },
+  cascade: {
+    tag: 'Модуль 3',
+    title: 'Каскад целей',
+    body: `<p>Замысел работает только если он правильно передаётся на каждый уровень организации. Бангей показывает как это делать — через каскад.</p>
+<div class="modal-section">
+  <div class="modal-section-title">Как работает каскад</div>
+  <p>Каждый уровень получает от руководителя: <strong>ситуацию</strong> (почему это важно), <strong>замысел</strong> (чего достичь и зачем), <strong>задачу</strong> (твоя роль), <strong>ресурсы</strong> и <strong>ограничения</strong>. Как именно — решает сам исполнитель.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Тест briefing back</div>
+  <p>Попроси подчинённого своими словами объяснить — что он будет делать и зачем. Не «повтори мои слова», а «объясни мне». Если он не может объяснить «зачем» — замысел не передан, передана только задача.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Типичная ошибка</div>
+  <p>Менеджер среднего уровня получает замысел, но вниз передаёт только задачи. Цепочка рвётся — люди внизу не понимают «зачем» и не могут адаптироваться при изменениях.</p>
+</div>`
+  },
+  independence: {
+    tag: 'Модуль 4',
+    title: 'Независимое мышление',
+    body: `<p>Замысел и каскад работают только если люди готовы и могут действовать самостоятельно. Это вопрос культуры.</p>
+<div class="modal-section">
+  <div class="modal-section-title">Obedient autonomy</div>
+  <p>Бангей вводит парадоксальное понятие — «послушная автономия». Исполнитель следует не букве приказа, а его духу. Когда ситуация меняется — не ждёт инструкций, а спрашивает себя: <strong>«Что хотел бы мой руководитель, если бы видел то, что вижу я?»</strong></p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Почему декларации не работают</div>
+  <p>Руководитель говорит «действуй самостоятельно» — но при первой ошибке наказывает. Люди быстро учатся: инициатива опасна, лучше ждать инструкций. Разрыв в согласованности возвращается.</p>
+</div>
+<div class="modal-section">
+  <div class="modal-section-title">Ключевая идея</div>
+  <p>Независимое мышление — не черта характера, а результат: человек понимает замысел достаточно хорошо, чтобы решать без руководителя. И живёт в культуре, где это безопасно.</p>
+</div>`
+  },
+};
+
+function openModal(key) {
+  const content = MODAL_CONTENT[key];
+  if (!content) return;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-tag">${content.tag}</div>
+    <div class="modal-title">${content.title}</div>
+    <div class="modal-body">${content.body}</div>
+  `;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'workbook_state_v1';
 
