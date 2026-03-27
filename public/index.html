@@ -1080,6 +1080,10 @@ function hideRegenForm() {
 async function regenWithCorrection() {
   const correction = document.getElementById('regen-correction').value.trim();
   if (!correction) return;
+  // Очищаем ответы и кэш чтобы пересоздание было явным
+  delete state.answers[state.currentModule];
+  delete state.exerciseCache[state.currentModule];
+  saveState();
   await openModule(state.currentModule, correction);
 }
 
