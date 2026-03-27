@@ -574,18 +574,22 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 20px; height: 20px;
+      width: 15px; height: 15px;
       border-radius: 50%;
       background: var(--bg3);
       border: 1px solid var(--border);
       color: var(--text3);
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 700;
       cursor: pointer;
       flex-shrink: 0;
       font-family: inherit;
       transition: all 0.15s;
       line-height: 1;
+      vertical-align: middle;
+      margin-left: 5px;
+      position: relative;
+      top: -1px;
     }
     .info-btn:hover { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); }
 
@@ -617,6 +621,9 @@
     <div class="w-sub">Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом.</div>
 
     <div id="tg-login-wrap">
+      <div style="font-size:13px; color:var(--text2); margin-bottom:0.75rem; line-height:1.5;">
+        Авторизуйтесь и подпишитесь на телеграм-канал <a href="https://t.me/m_cult_members" target="_blank" style="color:var(--accent);">@m_cult_members</a>, чтобы использовать воркбук
+      </div>
       <script async src="https://telegram.org/js/telegram-widget.js?22"
         data-telegram-login="wrkbook_bot"
         data-size="large"
@@ -633,7 +640,7 @@
       <div><button class="edit-ctx" onclick="retryAuth()">Я подписался — проверить снова</button></div>
     </div>
     <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
-    <button class="edit-ctx" style="margin-top:0.5rem" onclick="openModal('book')">Что за книга? →</button>
+    <button onclick="openModal('book')" style="margin-top:1rem; margin-bottom:2rem; background:var(--accent-light); border:1px solid var(--accent-mid); color:var(--accent); padding:9px 20px; border-radius:20px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition:all 0.15s;">📖 Что за книга? →</button>
     <div class="w-features">
       <div class="w-feat">
         <div class="wf-icon">🎯</div>
@@ -739,42 +746,30 @@
 
       <div class="module-list" id="module-list">
         <div class="module-item current" onclick="openModule('gaps')">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div>
-              <div class="module-name">Модуль 1 — Три разрыва</div>
-              <div class="module-sub">Почему стратегии не работают</div>
-            </div>
-            <button class="info-btn" onclick="event.stopPropagation();openModal('gaps')" title="О концепции">i</button>
+          <div>
+            <div class="module-name">Модуль 1 — Три разрыва<button class="info-btn" onclick="event.stopPropagation();openModal('gaps')" title="О концепции">i</button></div>
+            <div class="module-sub">Почему стратегии не работают</div>
           </div>
           <span class="module-badge badge-current">Начать</span>
         </div>
         <div class="module-item locked">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div>
-              <div class="module-name">Модуль 2 — Направленный оппортунизм</div>
-              <div class="module-sub">Открывается после модуля 1</div>
-            </div>
-            <button class="info-btn" onclick="event.stopPropagation();openModal('intent')" title="О концепции">i</button>
+          <div>
+            <div class="module-name">Модуль 2 — Направленный оппортунизм<button class="info-btn" onclick="event.stopPropagation();openModal('intent')" title="О концепции">i</button></div>
+            <div class="module-sub">Открывается после модуля 1</div>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
         <div class="module-item locked">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div>
-              <div class="module-name">Модуль 3 — Каскад целей</div>
-              <div class="module-sub">Открывается после модуля 2</div>
-            </div>
-            <button class="info-btn" onclick="event.stopPropagation();openModal('cascade')" title="О концепции">i</button>
+          <div>
+            <div class="module-name">Модуль 3 — Каскад целей<button class="info-btn" onclick="event.stopPropagation();openModal('cascade')" title="О концепции">i</button></div>
+            <div class="module-sub">Открывается после модуля 2</div>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
         <div class="module-item locked">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div>
-              <div class="module-name">Модуль 4 — Независимое мышление</div>
-              <div class="module-sub">Открывается после модуля 3</div>
-            </div>
-            <button class="info-btn" onclick="event.stopPropagation();openModal('independence')" title="О концепции">i</button>
+          <div>
+            <div class="module-name">Модуль 4 — Независимое мышление<button class="info-btn" onclick="event.stopPropagation();openModal('independence')" title="О концепции">i</button></div>
+            <div class="module-sub">Открывается после модуля 3</div>
           </div>
           <span class="module-badge badge-locked">Закрыт</span>
         </div>
