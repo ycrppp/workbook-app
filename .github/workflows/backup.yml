@@ -1,0 +1,35 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # каждую ночь в 3:00 UTC
+  workflow_dispatch:        # ручной запуск из GitHub UI
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Create dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
+          pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "$FILENAME"
+          echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
+          echo "Size: $(du -sh $FILENAME | cut -f1)"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}-${{ github.run_attempt }}
+          path: '*.dump'
+          retention-days: 90
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "::error::Database backup failed! Check DATABASE_URL secret and DB connectivity."
