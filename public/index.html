@@ -2157,6 +2157,7 @@ async function regenWithCorrection() {
     const wp = document.getElementById('welcome-page');
     const appEl = document.getElementById('app');
     wp.style.display = 'none';
+    document.body.classList.add('in-app');
     appEl.classList.add('visible');
 
     // Грузим свежие данные из БД (фоново, не блокируя UI)
