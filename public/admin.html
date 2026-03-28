@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ — Workbook</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0c;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0f0f0;
+      --text2: rgba(255,255,255,0.45);
+      --accent: #fa471f;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 1rem;
+      padding: 2rem;
+    }
+    #login-screen h1 { font-size: 22px; font-weight: 600; }
+    #login-screen p  { color: var(--text2); font-size: 13px; }
+    #secret-input {
+      width: 100%;
+      max-width: 320px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+    #secret-input:focus { border-color: var(--accent); }
+    #login-btn {
+      padding: 10px 28px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #login-error { color: #ff5555; font-size: 13px; display: none; }
+
+    /* ── DASHBOARD ── */
+    #dashboard { display: none; max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    #logout-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #logout-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+    }
+    .card-label { font-size: 12px; color: var(--text2); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .card-value { font-size: 32px; font-weight: 700; line-height: 1; }
+    .card-sub   { font-size: 12px; color: var(--text2); margin-top: 0.4rem; }
+
+    /* ── CHART SECTION ── */
+    .section { margin-bottom: 2rem; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .section-title { font-size: 15px; font-weight: 600; }
+    .tabs { display: flex; gap: 4px; }
+    .tab {
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      position: relative;
+      height: 280px;
+    }
+
+    /* ── LOADING ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading { display: none; color: var(--text2); font-size: 14px; text-align: center; padding: 3rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <h1>Workbook Admin</h1>
+  <p>Введи секретный ключ (BACKUP_SECRET)</p>
+  <input id="secret-input" type="password" placeholder="••••••••••••" autocomplete="off" />
+  <button id="login-btn">Войти</button>
+  <div id="login-error">Неверный ключ или ошибка сервера</div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <header>
+    <h1>📊 Статистика</h1>
+    <button id="logout-btn">Выйти</button>
+  </header>
+
+  <div id="loading"><span class="spinner"></span> Загружаю данные...</div>
+
+  <div id="stats-body" style="display:none">
+
+    <!-- Карточки -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-label">Всего пользователей</div>
+        <div class="card-value" id="stat-total">—</div>
+        <div class="card-sub">с момента запуска</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Модулей на пользователя</div>
+        <div class="card-value" id="stat-modules">—</div>
+        <div class="card-sub">среднее завершённых</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Воркбуков на пользователя</div>
+        <div class="card-value" id="stat-projects">—</div>
+        <div class="card-sub">среднее созданных</div>
+      </div>
+    </div>
+
+    <!-- График новых пользователей -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Новые пользователи</div>
+        <div class="tabs">
+          <button class="tab active" data-period="day">По дням</button>
+          <button class="tab" data-period="week">По неделям</button>
+          <button class="tab" data-period="month">По месяцам</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="users-chart"></canvas>
+      </div>
+    </div>
+
+  </div><!-- /stats-body -->
+</div><!-- /dashboard -->
+
+<script>
+  const APP_URL = '';  // пустая строка = тот же origin (работает и локально и на Railway)
+  let secret = '';
+  let statsData = null;
+  let chart = null;
+
+  // ── AUTH ──────────────────────────────────────────────────────────────────────
+  document.getElementById('login-btn').addEventListener('click', tryLogin);
+  document.getElementById('secret-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+  async function tryLogin() {
+    const input = document.getElementById('secret-input').value.trim();
+    if (!input) return;
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-btn').textContent = 'Проверяю...';
+
+    try {
+      const res = await fetch(`${APP_URL}/api/admin/stats`, {
+        headers: { 'x-backup-secret': input }
+      });
+      if (!res.ok) throw new Error('Unauthorized');
+      secret = input;
+      sessionStorage.setItem('admin_secret', secret);
+      statsData = await res.json();
+      showDashboard();
+    } catch (e) {
+      document.getElementById('login-error').style.display = 'block';
+    } finally {
+      document.getElementById('login-btn').textContent = 'Войти';
+    }
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    secret = '';
+    sessionStorage.removeItem('admin_secret');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('secret-input').value = '';
+  });
+
+  // ── DASHBOARD ────────────────────────────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    document.getElementById('stat-total').textContent   = statsData.total ?? '—';
+    document.getElementById('stat-modules').textContent = statsData.avgModules ?? '—';
+    document.getElementById('stat-projects').textContent = statsData.avgProjects ?? '—';
+
+    document.getElementById('stats-body').style.display = 'block';
+    renderChart('day');
+  }
+
+  // ── CHART ────────────────────────────────────────────────────────────────────
+  function renderChart(period) {
+    const raw = statsData[period === 'day' ? 'byDay' : period === 'week' ? 'byWeek' : 'byMonth'] || [];
+
+    const labels = raw.map(r => {
+      if (period === 'day') {
+        const d = new Date(r.label + 'T00:00:00Z');
+        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+      } else if (period === 'week') {
+        const d = new Date(r.label + 'T00:00:00Z');
+        return 'Нед. ' + d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+      } else {
+        const [y, m] = r.label.split('-');
+        return new Date(+y, +m - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+      }
+    });
+    const values = raw.map(r => r.count);
+
+    if (chart) chart.destroy();
+    const ctx = document.getElementById('users-chart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Новые пользователи',
+          data: values,
+          backgroundColor: 'rgba(250, 71, 31, 0.7)',
+          borderColor: 'rgba(250, 71, 31, 1)',
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1a1a1a',
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            titleColor: '#f0f0f0',
+            bodyColor: 'rgba(255,255,255,0.6)',
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 }, precision: 0 },
+            grid: { color: 'rgba(255,255,255,0.05)' }
+          }
+        }
+      }
+    });
+  }
+
+  // Переключение периода
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderChart(btn.dataset.period);
+    });
+  });
+
+  // Авто-логин если секрет сохранён в сессии
+  (async function() {
+    const saved = sessionStorage.getItem('admin_secret');
+    if (!saved) return;
+    try {
+      const res = await fetch(`${APP_URL}/api/admin/stats`, { headers: { 'x-backup-secret': saved } });
+      if (!res.ok) return;
+      secret = saved;
+      statsData = await res.json();
+      showDashboard();
+    } catch (e) {}
+  })();
+</script>
+</body>
+</html>

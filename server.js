@@ -386,6 +386,69 @@ app.get('/api/admin/backup', async (req, res) => {
   }
 });
 
+// ─── ADMIN STATS ──────────────────────────────────────────────────────────────
+app.get('/api/admin/stats', async (req, res) => {
+  const secret = process.env.BACKUP_SECRET;
+  if (!secret || req.headers['x-backup-secret'] !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  try {
+    const [byDay, byWeek, byMonth, avgModules, avgProjects, total] = await Promise.all([
+      // Новые пользователи по дням (последние 30 дней)
+      pool.query(`
+        SELECT TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY label ORDER BY label
+      `),
+      // По неделям (последние 12 недель)
+      pool.query(`
+        SELECT TO_CHAR(DATE_TRUNC('week', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '12 weeks'
+        GROUP BY label ORDER BY label
+      `),
+      // По месяцам (последние 12 месяцев)
+      pool.query(`
+        SELECT TO_CHAR(DATE_TRUNC('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS label, COUNT(*)::int AS count
+        FROM users
+        WHERE created_at >= NOW() - INTERVAL '12 months'
+        GROUP BY label ORDER BY label
+      `),
+      // Среднее кол-во пройденных модулей на пользователя
+      pool.query(`
+        SELECT ROUND(AVG(modules_count)::numeric, 1)::float AS avg
+        FROM (
+          SELECT telegram_id,
+            COALESCE(SUM(COALESCE(jsonb_array_length(p->'completedModules'), 0)), 0) AS modules_count
+          FROM users, jsonb_array_elements(projects->'projects') p
+          GROUP BY telegram_id
+        ) t
+      `),
+      // Среднее кол-во проектов на пользователя
+      pool.query(`
+        SELECT ROUND(AVG(jsonb_array_length(projects->'projects'))::numeric, 1)::float AS avg
+        FROM users
+        WHERE jsonb_array_length(projects->'projects') > 0
+      `),
+      // Всего пользователей
+      pool.query(`SELECT COUNT(*)::int AS count FROM users`),
+    ]);
+
+    res.json({
+      total: total.rows[0].count,
+      byDay: byDay.rows,
+      byWeek: byWeek.rows,
+      byMonth: byMonth.rows,
+      avgModules: avgModules.rows[0].avg ?? 0,
+      avgProjects: avgProjects.rows[0].avg ?? 0,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   const status = { status: 'ok', db: pool ? 'checking' : 'disabled', ts: new Date().toISOString() };
