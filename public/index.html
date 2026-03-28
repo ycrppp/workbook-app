@@ -1619,34 +1619,50 @@ async function regenWithCorrection() {
 (function() {
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (tgUser) showUserBadge(tgUser);
+    if (!tgUser) return;
+
+    showUserBadge(tgUser);
+
+    const wp = document.getElementById('welcome-page');
+    const app = document.getElementById('app');
+    wp.style.display = 'none';
+    app.classList.add('visible');
+
+    if (projectsData.projects.length === 0) {
+      createNewProject();
+      return;
+    }
+
+    if (_cur) {
+      if (state.role) {
+        document.querySelectorAll('#role-chips .chip').forEach(c => {
+          if (c.textContent.trim() === state.role) c.classList.add('selected');
+        });
+      }
+      if (state.size) {
+        document.querySelectorAll('#size-chips .chip').forEach(c => {
+          if (c.textContent.trim() === state.size) c.classList.add('selected');
+        });
+      }
+      document.getElementById('biz').value = state.biz || '';
+      document.getElementById('pain').value = state.pain || '';
+      buildCtxTags('ctx-tags');
+      buildCtxTags('mod-ctx-tags');
+      updateModuleList();
+      updateProjectLabel();
+    }
+
+    if (projectsData.projects.length > 1) {
+      renderProjects();
+      goStep(0);
+    } else if (_cur && (_cur.biz || _cur.pain)) {
+      goStep(3);
+    } else {
+      renderProjects();
+      goStep(0);
+    }
   } catch(e) {}
 })();
-
-if (_saved && (_saved.biz || _saved.pain)) {
-  const wp = document.getElementById('welcome-page');
-  const app = document.getElementById('app');
-  wp.style.display = 'none';
-  app.classList.add('visible');
-
-  if (state.role) {
-    document.querySelectorAll('#role-chips .chip').forEach(c => {
-      if (c.textContent.trim() === state.role) c.classList.add('selected');
-    });
-  }
-  if (state.size) {
-    document.querySelectorAll('#size-chips .chip').forEach(c => {
-      if (c.textContent.trim() === state.size) c.classList.add('selected');
-    });
-  }
-  document.getElementById('biz').value = state.biz || '';
-  document.getElementById('pain').value = state.pain || '';
-
-  buildCtxTags('ctx-tags');
-  buildCtxTags('mod-ctx-tags');
-  updateModuleList();
-  goStep(3);
-}
 </script>
 </body>
 </html>
