@@ -8,20 +8,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #1a1a1a;
-      --bg2: #242424;
-      --bg3: #2e2e2e;
+      --bg: #141414;
+      --bg2: #1e1e1e;
+      --bg3: #282828;
       --text: #f0efe9;
-      --text2: #aaa;
-      --text3: #666;
-      --border: #3a3a3a;
-      --border2: #555;
-      --accent: #2e75b6;
-      --accent-light: #1a2d3f;
-      --accent-mid: #5aa0d8;
+      --text2: #888;
+      --text3: #555;
+      --border: #2e2e2e;
+      --border2: #444;
+      --accent: #fa471f;
+      --accent-light: rgba(250,71,31,0.1);
+      --accent-mid: rgba(250,71,31,0.45);
       --success: #6abf6a;
-      --radius: 10px;
-      --radius-sm: 6px;
+      --radius: 12px;
+      --radius-sm: 8px;
     }
 
     body {
@@ -245,9 +245,9 @@
     }
     .chip:hover { border-color: var(--border2); color: var(--text); }
     .chip.selected {
-      background: var(--accent-light);
-      border-color: var(--accent-mid);
-      color: var(--accent);
+      background: rgba(250,71,31,0.1);
+      border-color: rgba(250,71,31,0.5);
+      color: #fa471f;
       font-weight: 500;
     }
 
@@ -283,11 +283,13 @@
     }
     .btn:hover { background: var(--bg2); }
     .btn.primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: transparent;
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      font-weight: 500;
+      letter-spacing: -0.2px;
     }
-    .btn.primary:hover { opacity: 0.88; }
+    .btn.primary:hover { background: #fa471f; border-color: #fa471f; color: #ffffff; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .nav {
       display: flex;
@@ -362,7 +364,7 @@
     }
     .module-item:hover:not(.locked) { border-color: var(--border2); background: var(--bg2); }
     .module-item.locked { opacity: 0.4; cursor: default; }
-    .module-item.current { border-color: var(--accent-mid); background: var(--accent-light); }
+    .module-item.current { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
     .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
     .module-name { font-size: 14px; font-weight: 500; color: var(--text); }
     .module-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
@@ -372,7 +374,7 @@
       border-radius: 20px;
       flex-shrink: 0;
     }
-    .badge-current { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-mid); }
+    .badge-current { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.18); }
     .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
     .badge-locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
 
