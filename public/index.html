@@ -831,6 +831,9 @@
       <div class="page-title">Настройка воркбука</div>
       <div class="page-sub">Расскажите о себе — все упражнения будут написаны под вашу конкретную ситуацию, а не про абстрактного менеджера.</div>
 
+      <div class="section-label">Название воркбука</div>
+      <input type="text" id="workbook-name" placeholder="Например: Мой стартап, Команда продаж..." maxlength="60" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:15px;outline:none;margin-bottom:1.25rem;" onfocus="this.style.borderColor='rgba(255,255,255,0.25)'" onblur="this.style.borderColor='var(--border)'"/>
+
       <div class="section-label">Кто вы</div>
       <div class="chip-row" id="role-chips">
         <span class="chip" onclick="pick(this,'role')">Фаундер / CEO</span>
@@ -1290,6 +1293,7 @@ function createNewProject() {
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('biz').value = '';
   document.getElementById('pain').value = '';
+  document.getElementById('workbook-name').value = '';
   goStep(1);
 }
 
@@ -1427,6 +1431,13 @@ function pick(el, group) {
 async function submitOnboarding() {
   state.biz = document.getElementById('biz').value.trim();
   state.pain = document.getElementById('pain').value.trim();
+
+  // Сохраняем кастомное имя воркбука если задано
+  const wbName = document.getElementById('workbook-name').value.trim();
+  if (wbName && projectsData.currentProjectId) {
+    const proj = projectsData.projects.find(p => p.id === projectsData.currentProjectId);
+    if (proj) { proj.name = wbName; proj.customName = true; }
+  }
 
   if (!state.pain && !state.biz) {
     document.getElementById('s1-error').innerHTML =
