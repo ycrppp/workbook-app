@@ -16,6 +16,9 @@ if not database_url:
 
 conn = psycopg2.connect(database_url, sslmode='require')
 cur = conn.cursor()
+cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+tables = [r[0] for r in cur.fetchall()]
+print(f"Tables found: {tables}", file=sys.stderr)
 cur.execute('SELECT telegram_id, first_name, last_name, username, projects, created_at, updated_at FROM users')
 cols = [d[0] for d in cur.description]
 rows = [dict(zip(cols, r)) for r in cur.fetchall()]
