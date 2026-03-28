@@ -404,9 +404,46 @@
     document.getElementById('stat-range-label').textContent = label;
   }
 
+  // Генерирует полный ряд дат за период и заполняет пропуски нулями
+  function fillSeries(data, from, to, group) {
+    if (!from || !to) return data; // "Всё время" — показываем только реальные точки
+    const map = {};
+    data.forEach(r => { map[r.label] = r.count; });
+    const result = [];
+    const end = new Date(to + 'T00:00:00Z');
+
+    if (group === 'day') {
+      const cur = new Date(from + 'T00:00:00Z');
+      while (cur <= end) {
+        const label = cur.toISOString().slice(0, 10);
+        result.push({ label, count: map[label] || 0 });
+        cur.setUTCDate(cur.getUTCDate() + 1);
+      }
+    } else if (group === 'week') {
+      // Начинаем с понедельника недели, содержащей from
+      const cur = new Date(from + 'T00:00:00Z');
+      const day = cur.getUTCDay();
+      cur.setUTCDate(cur.getUTCDate() - (day === 0 ? 6 : day - 1));
+      while (cur <= end) {
+        const label = cur.toISOString().slice(0, 10);
+        result.push({ label, count: map[label] || 0 });
+        cur.setUTCDate(cur.getUTCDate() + 7);
+      }
+    } else if (group === 'month') {
+      const cur = new Date(from + 'T00:00:00Z');
+      cur.setUTCDate(1);
+      while (cur <= end) {
+        const label = cur.toISOString().slice(0, 7); // YYYY-MM
+        result.push({ label, count: map[label] || 0 });
+        cur.setUTCMonth(cur.getUTCMonth() + 1);
+      }
+    }
+    return result;
+  }
+
   function renderChart() {
     const key = currentGroup === 'day' ? 'byDay' : currentGroup === 'week' ? 'byWeek' : 'byMonth';
-    const raw = statsData[key] || [];
+    const raw = fillSeries(statsData[key] || [], currentFrom, currentTo, currentGroup);
     const noDataEl = document.getElementById('no-data');
 
     if (!raw.length) {
