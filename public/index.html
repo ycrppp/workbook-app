@@ -53,8 +53,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 5rem 1.5rem 3rem;
+      justify-content: flex-start;
+      padding: 3rem 1.5rem 3rem;
       z-index: 100;
       overflow-y: auto;
       transition: opacity 0.4s ease, transform 0.4s ease;
@@ -872,7 +872,7 @@
        WELCOME PAGE (full-screen)
   ══════════════════════════════════════════ -->
   <div id="welcome-page">
-    <div class="app-logo" style="position:absolute; top:1.25rem; left:1.25rem; pointer-events:none;">Workbook</div>
+    <div class="app-logo" style="margin-bottom:1.5rem; pointer-events:none;">Workbook</div>
     <div class="w-badge">Воркбук · <em>Стивен Бангей</em></div>
     <div class="w-icon">📖</div>
     <div class="w-title">Искусство действия</div>
@@ -1759,15 +1759,26 @@ function retryAuth() {
   document.getElementById('tg-login-wrap').style.display = 'block';
 }
 
-// ─── WELCOME → APP ────────────────────────────────────────────────────────────
-function openWorkbook() {
+// ─── APP VISIBILITY (единственное место управления видимостью) ────────────────
+// animate=true: плавный переход (при логине)
+// animate=false: мгновенно (при восстановлении сессии после reload)
+function enterApp(animate) {
   const wp = document.getElementById('welcome-page');
   const app = document.getElementById('app');
-  wp.classList.add('hiding');
   document.body.classList.add('in-app');
-  setTimeout(() => {
+  if (animate) {
+    wp.classList.add('hiding');
+    setTimeout(() => { wp.style.display = 'none'; app.classList.add('visible'); }, 400);
+  } else {
     wp.style.display = 'none';
     app.classList.add('visible');
+  }
+}
+
+// ─── WELCOME → APP ────────────────────────────────────────────────────────────
+function openWorkbook() {
+  enterApp(true);
+  setTimeout(() => {
     if (projectsData.projects.length > 0) {
       renderProjects();
       goStep(0);
@@ -2153,12 +2164,7 @@ async function regenWithCorrection() {
     if (!tgUser) return;
 
     showUserBadge(tgUser);
-
-    const wp = document.getElementById('welcome-page');
-    const appEl = document.getElementById('app');
-    wp.style.display = 'none';
-    document.body.classList.add('in-app');
-    appEl.classList.add('visible');
+    enterApp(false);
 
     // Грузим свежие данные из БД (фоново, не блокируя UI)
     fetch('/api/user/load', {
