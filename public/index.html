@@ -1186,7 +1186,9 @@ function saveState() {
   if (projectsData.currentProjectId) {
     const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
     if (idx >= 0) {
-      projectsData.projects[idx] = { ...projectsData.projects[idx], ...fields, name: projectLabel(state) };
+      const existing = projectsData.projects[idx];
+      const newName = existing.customName ? existing.name : (projectLabel(state) || existing.name);
+      projectsData.projects[idx] = { ...existing, ...fields, name: newName };
       saveProjects();
       return;
     }
@@ -1242,7 +1244,7 @@ function startRenameProject(e, id) {
   function save() {
     const newName = input.value.trim() || oldName;
     const proj = projectsData.projects.find(p => p.id === id);
-    if (proj) { proj.name = newName; saveProjects(); }
+    if (proj) { proj.name = newName; proj.customName = true; saveProjects(); }
     renderProjects();
     if (projectsData.currentProjectId === id) updateProjectLabel();
   }
