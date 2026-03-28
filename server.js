@@ -360,6 +360,24 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
+// ─── BACKUP ENDPOINT ──────────────────────────────────────────────────────────
+app.get('/api/admin/backup', async (req, res) => {
+  const secret = process.env.BACKUP_SECRET;
+  if (!secret || req.headers['x-backup-secret'] !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!pool) return res.status(503).json({ error: 'No database' });
+  try {
+    const result = await pool.query(
+      'SELECT telegram_id, first_name, last_name, username, projects, created_at, updated_at FROM users'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="backup_${Date.now()}.json"`);
+    res.json(result.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
 app.get('/health', async (req, res) => {
   const status = { status: 'ok', db: pool ? 'checking' : 'disabled', ts: new Date().toISOString() };

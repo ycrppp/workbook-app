@@ -11,15 +11,15 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: pip install psycopg2-binary
-
       - name: Create backup
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python3 scripts/backup.py > backup_$(date +%Y%m%d_%H%M%S).json
+          APP_URL: ${{ secrets.APP_URL }}
+          BACKUP_SECRET: ${{ secrets.BACKUP_SECRET }}
+        run: |
+          FILENAME="backup_$(date +%Y%m%d_%H%M%S).json"
+          curl -f -s -H "x-backup-secret: $BACKUP_SECRET" "$APP_URL/api/admin/backup" -o "$FILENAME"
+          echo "Users backed up: $(python3 -c "import json; print(len(json.load(open('$FILENAME'))))")"
+          echo "Size: $(du -sh $FILENAME | cut -f1)"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -30,4 +30,4 @@ jobs:
 
       - name: Notify on failure
         if: failure()
-        run: echo "::error::Database backup failed! Check DATABASE_URL secret."
+        run: echo "::error::Database backup failed!"
