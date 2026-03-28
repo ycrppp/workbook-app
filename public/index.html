@@ -717,6 +717,14 @@
       .page-title { font-size: 19px; }
     }
   </style>
+  <script>
+    // Скрываем welcome-страницу до рендера если пользователь уже залогинен
+    try {
+      if (localStorage.getItem('tg_user')) {
+        document.write('<style>#welcome-page{display:none!important}</style>');
+      }
+    } catch(e) {}
+  </script>
 </head>
 <body>
 
