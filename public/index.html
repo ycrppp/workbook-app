@@ -1327,17 +1327,18 @@ function syncToDb() {
 }
 
 function saveProjects() {
+  projectsData.updatedAt = Date.now();
   try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData)); } catch(e) {}
   clearTimeout(_syncTimer);
   _syncTimer = setTimeout(syncToDb, 800);
 }
 
-// Sync on page unload as safety net
+// Sync on page unload as safety net (normal navigation/close, not logout)
 window.addEventListener('beforeunload', () => {
   clearTimeout(_syncTimer);
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (!tgUser) return;
+    if (!tgUser) return; // logout already handled sync before removing tg_user
     navigator.sendBeacon('/api/user/sync', JSON.stringify({
       telegram_id: tgUser.id,
       first_name: tgUser.first_name,
@@ -1526,16 +1527,22 @@ async function onTelegramAuth(user) {
           body: JSON.stringify({ telegram_id: user.id }),
         });
         const dbData = await dbResp.json();
-        if (dbData.projects && dbData.projects.projects) {
-          // Мёрджим: БД приоритетнее, но если там пусто — берём localStorage
+        if (dbData.projects) {
           const localProjects = projectsData.projects || [];
-          const dbProjects = dbData.projects.projects || [];
-          if (dbProjects.length > 0) {
+          const dbProjects = (dbData.projects.projects) || [];
+          const localTs = projectsData.updatedAt || 0;
+          const dbTs = dbData.projects.updatedAt || 0;
+
+          if (dbProjects.length > 0 && dbTs >= localTs) {
+            // DB is same age or newer — authoritative
+            projectsData = dbData.projects;
+          } else if (localProjects.length > 0 && localTs > dbTs) {
+            // Local is newer (DB sync failed during last logout) — restore and re-sync
+            saveProjects();
+          } else if (dbProjects.length > 0) {
             projectsData = dbData.projects;
           } else if (localProjects.length > 0) {
-            // Новый пользователь в БД, но есть локальные данные — синхронизируем
-            projectsData = { projects: localProjects, currentProjectId: projectsData.currentProjectId };
-            saveProjects(); // запишет в БД через sync
+            saveProjects(); // new user in DB, sync local backup
           }
           localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
         }
@@ -1594,9 +1601,24 @@ function goToProjectsList() {
 
 async function logout() {
   clearTimeout(_syncTimer);
-  await syncToDb();
+  // Sync before clearing auth — tg_user must still be in localStorage at this point
+  const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
+  if (tgUser) {
+    const body = JSON.stringify({
+      telegram_id: tgUser.id,
+      first_name: tgUser.first_name,
+      last_name: tgUser.last_name,
+      username: tgUser.username,
+      photo_url: tgUser.photo_url,
+      projects: projectsData,
+    });
+    // sendBeacon is fire-and-forget but survives page unload
+    navigator.sendBeacon('/api/user/sync', body);
+    // Also await fetch for reliability
+    try { await fetch('/api/user/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }); } catch(e) {}
+  }
   localStorage.removeItem('tg_user');
-  localStorage.removeItem(PROJECTS_KEY);
+  // Keep PROJECTS_KEY as backup — will be merged on next login if DB sync failed
   window.location.reload();
 }
 
@@ -1614,15 +1636,25 @@ async function submitOnboarding() {
 
   // Сохраняем кастомное имя воркбука если задано
   const wbName = document.getElementById('workbook-name').value.trim();
-  if (wbName && projectsData.currentProjectId) {
-    const proj = projectsData.projects.find(p => p.id === projectsData.currentProjectId);
-    if (proj) { proj.name = wbName; proj.customName = true; }
-  }
+
+  const MIN_CHARS = 30;
+  const bizErr = state.biz.length > 0 && state.biz.length < MIN_CHARS;
+  const painErr = state.pain.length > 0 && state.pain.length < MIN_CHARS;
 
   if (!state.pain && !state.biz) {
     document.getElementById('s1-error').innerHTML =
       '<div class="error-box">Опишите хотя бы вашу ситуацию или главную боль — без этого персонализация не сработает.</div>';
     return;
+  }
+  if (bizErr || painErr) {
+    document.getElementById('s1-error').innerHTML =
+      '<div class="error-box">Пожалуйста, опишите подробнее — нужно минимум 30 символов. Чем конкретнее, тем точнее будут упражнения.</div>';
+    return;
+  }
+
+  if (wbName && projectsData.currentProjectId) {
+    const proj = projectsData.projects.find(p => p.id === projectsData.currentProjectId);
+    if (proj) { proj.name = wbName; proj.customName = true; saveProjects(); }
   }
   document.getElementById('s1-error').innerHTML = '';
 
@@ -1663,10 +1695,12 @@ function updateProjectLabel() {
 
 function confirmContext() {
   state.correction = document.getElementById('s2-correction')?.value.trim() || '';
-  // Update project name from biz/pain
+  // Update project name from biz/pain only if no custom name set
   if (projectsData.currentProjectId) {
     const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
-    if (idx >= 0) projectsData.projects[idx].name = projectLabel(state);
+    if (idx >= 0 && !projectsData.projects[idx].customName) {
+      projectsData.projects[idx].name = projectLabel(state);
+    }
   }
   saveState();
   updateProjectLabel();
