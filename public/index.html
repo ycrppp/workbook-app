@@ -581,8 +581,9 @@
       align-items: center;
       gap: 8px;
       z-index: 100;
-      pointer-events: none;
+      pointer-events: auto;
       padding-bottom: 6px;
+      cursor: pointer;
     }
     .user-avatar {
       width: 28px;
@@ -596,7 +597,35 @@
       font-size: 13px;
       font-weight: 400;
       color: rgba(255,255,255,0.55);
+      transition: color 0.15s;
     }
+    .user-badge:hover .user-name { color: rgba(255,255,255,0.85); }
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 2px);
+      right: 0;
+      background: #1e1e1e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      min-width: 160px;
+      padding: 4px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .user-badge:hover .user-dropdown { display: flex; }
+    .user-dropdown-item {
+      padding: 9px 14px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      white-space: nowrap;
+    }
+    .user-dropdown-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .user-dropdown-item.danger { color: rgba(255,80,60,0.8); }
+    .user-dropdown-item.danger:hover { background: rgba(255,60,40,0.1); color: #ff4a35; }
 
     /* PROJECT LABEL (current project name badge) */
     .project-label {
@@ -762,9 +791,13 @@
   <div id="app">
 
     <!-- ── USER BADGE ──────────────────────────────────────────────────── -->
-    <div class="user-badge" id="user-badge" style="display:none">
+    <div class="user-badge" id="user-badge" style="display:none; position:relative">
       <img class="user-avatar" id="user-avatar" src="" alt=""/>
       <span class="user-name" id="user-name"></span>
+      <div class="user-dropdown">
+        <div class="user-dropdown-item" onclick="goToProjectsList()">Мои воркбуки</div>
+        <div class="user-dropdown-item danger" onclick="logout()">Выйти</div>
+      </div>
     </div>
 
     <div class="progress-wrap">
@@ -1365,6 +1398,12 @@ function goToProjectsList() {
   saveState();
   renderProjects();
   goStep(0);
+}
+
+function logout() {
+  localStorage.removeItem('tg_user');
+  localStorage.removeItem(PROJECTS_KEY);
+  window.location.reload();
 }
 
 // ─── CHIPS ────────────────────────────────────────────────────────────────────
