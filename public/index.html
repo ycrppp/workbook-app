@@ -567,6 +567,7 @@
       gap: 8px;
       z-index: 100;
       pointer-events: none;
+      padding-bottom: 6px;
     }
     .user-avatar {
       width: 28px;
@@ -580,10 +581,6 @@
       font-size: 13px;
       font-weight: 400;
       color: rgba(255,255,255,0.55);
-      max-width: 140px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     /* PROJECT LABEL (current project name badge) */
@@ -1348,7 +1345,13 @@ async function openModule(moduleId, regenCorrection) {
 
   goStep(4);
 
-  const previousAnswers = state.answers[moduleId] || {};
+  // Собираем ответы из всех модулей ДО текущего
+  const moduleIndex = MODULE_ORDER.indexOf(moduleId);
+  const previousAnswers = {};
+  MODULE_ORDER.slice(0, moduleIndex).forEach(prevId => {
+    const ans = state.answers[prevId];
+    if (ans) Object.entries(ans).forEach(([k, v]) => { previousAnswers[`${prevId}_${k}`] = v; });
+  });
 
   try {
     const resp = await fetch('/api/generate', {

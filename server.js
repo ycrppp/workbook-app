@@ -97,8 +97,16 @@ app.post('/api/generate', async (req, res) => {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
+  const MODULE_TITLES = { gaps: 'Три разрыва', intent: 'Направленный оппортунизм', cascade: 'Каскад целей', independence: 'Независимое мышление' };
+  const EX_LABELS = { ex1: 'Упражнение 1', ex2: 'Упражнение 2', ex3: 'Упражнение 3' };
   const prevAnswersText = previousAnswers && Object.keys(previousAnswers).length > 0
-    ? `\nПредыдущие ответы пользователя:\n${Object.entries(previousAnswers).map(([k,v]) => `- ${k}: ${v}`).join('\n')}`
+    ? `\nЧто пользователь уже написал в предыдущих модулях (используй как контекст, не повторяй те же вопросы):\n` +
+      Object.entries(previousAnswers)
+        .filter(([,v]) => v && v.trim())
+        .map(([k, v]) => {
+          const [modId, exId] = k.split('_');
+          return `[${MODULE_TITLES[modId] || modId} / ${EX_LABELS[exId] || exId}]: ${v}`;
+        }).join('\n')
     : '';
 
   const systemPrompt = `Ты создаёшь упражнения для воркбука по книге «${book.title}» (${book.author}).
