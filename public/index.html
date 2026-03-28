@@ -632,7 +632,19 @@
     }
     .project-card:hover { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.12); }
     .project-card.project-current { background: rgba(255,255,255,0.04); }
-    .proj-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .proj-name-row { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+    .proj-name { font-size: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .proj-edit-btn {
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 2px;
+      line-height: 0;
+    }
+    .proj-edit-btn:hover { color: var(--text); }
+    .project-card:hover .proj-edit-btn { opacity: 1; }
     .proj-meta { font-size: 12px; color: var(--text3); }
     .proj-done { color: #6abf6a; }
     .proj-rename-input {
@@ -1142,7 +1154,15 @@ function renderProjects() {
     const isCurrent = proj.id === projectsData.currentProjectId;
     const doneText = done === 4 ? '<span class="proj-done">✓ Завершён</span>' : done + ' из 4 модулей';
     return `<div class="project-card ${isCurrent ? 'project-current' : ''}" onclick="selectProject('${proj.id}')">
-      <div class="proj-name" ondblclick="startRenameProject(event,'${proj.id}')">${safeEsc(proj.name)}</div>
+      <div class="proj-name-row">
+        <div class="proj-name" ondblclick="startRenameProject(event,'${proj.id}')">${safeEsc(proj.name)}</div>
+        <span class="proj-edit-btn" onclick="startRenameProject(event,'${proj.id}')" title="Переименовать">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.5 1.5L11.5 3.5L4.5 10.5H2.5V8.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+            <path d="M8 3L10 5" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </span>
+      </div>
       <div class="proj-meta">${doneText} · ${date}</div>
     </div>`;
   }).join('');
