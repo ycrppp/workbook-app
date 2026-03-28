@@ -2,10 +2,38 @@ require('dotenv').config({ override: true });
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const { Pool } = require('pg');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── DATABASE ─────────────────────────────────────────────────────────────────
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : null;
+
+async function initDb() {
+  if (!pool) { console.log('[db] DATABASE_URL not set, skipping DB init'); return; }
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        telegram_id BIGINT PRIMARY KEY,
+        first_name  TEXT,
+        last_name   TEXT,
+        username    TEXT,
+        photo_url   TEXT,
+        projects    JSONB NOT NULL DEFAULT '{"projects":[],"currentProjectId":null}',
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[db] table ready');
+  } catch (e) {
+    console.error('[db] init error:', e.message);
+  }
+}
+initDb();
 
 // ─── BOOK KNOWLEDGE BASE ─────────────────────────────────────────────────────
 const BOOKS = {
@@ -296,6 +324,48 @@ app.post('/api/answer', (req, res) => {
 
 app.get('/api/answers/:sessionId', (req, res) => {
   res.json(sessions[req.params.sessionId] || {});
+});
+
+// ─── USER LOAD (после auth — грузим данные из БД) ─────────────────────────────
+app.post('/api/user/load', async (req, res) => {
+  if (!pool) return res.json({ projects: { projects: [], currentProjectId: null } });
+  const { telegram_id } = req.body;
+  if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
+  try {
+    const result = await pool.query('SELECT projects FROM users WHERE telegram_id = $1', [telegram_id]);
+    if (result.rows.length === 0) {
+      res.json({ projects: { projects: [], currentProjectId: null }, isNew: true });
+    } else {
+      res.json({ projects: result.rows[0].projects });
+    }
+  } catch (e) {
+    console.error('[db] load error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── USER SYNC (сохраняем воркбуки в БД) ─────────────────────────────────────
+app.post('/api/user/sync', async (req, res) => {
+  if (!pool) return res.json({ success: true });
+  const { telegram_id, first_name, last_name, username, photo_url, projects } = req.body;
+  if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
+  try {
+    await pool.query(`
+      INSERT INTO users (telegram_id, first_name, last_name, username, photo_url, projects, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      ON CONFLICT (telegram_id) DO UPDATE SET
+        first_name = EXCLUDED.first_name,
+        last_name  = EXCLUDED.last_name,
+        username   = EXCLUDED.username,
+        photo_url  = EXCLUDED.photo_url,
+        projects   = EXCLUDED.projects,
+        updated_at = NOW()
+    `, [telegram_id, first_name || '', last_name || '', username || '', photo_url || '', JSON.stringify(projects)]);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('[db] sync error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─── START ────────────────────────────────────────────────────────────────────

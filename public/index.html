@@ -1104,8 +1104,29 @@ function loadProjects() {
   return { projects: [], currentProjectId: null };
 }
 
+let _syncTimer = null;
 function saveProjects() {
   try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData)); } catch(e) {}
+  // Дебounced sync to DB
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    try {
+      const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
+      if (!tgUser) return;
+      fetch('/api/user/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegram_id: tgUser.id,
+          first_name: tgUser.first_name,
+          last_name: tgUser.last_name,
+          username: tgUser.username,
+          photo_url: tgUser.photo_url,
+          projects: projectsData,
+        }),
+      }).catch(() => {});
+    } catch(e) {}
+  }, 1500);
 }
 
 let projectsData = loadProjects();
@@ -1271,6 +1292,28 @@ async function onTelegramAuth(user) {
 
     if (data.subscribed) {
       showUserBadge(user);
+      // Загружаем данные пользователя из БД
+      try {
+        const dbResp = await fetch('/api/user/load', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telegram_id: user.id }),
+        });
+        const dbData = await dbResp.json();
+        if (dbData.projects && dbData.projects.projects) {
+          // Мёрджим: БД приоритетнее, но если там пусто — берём localStorage
+          const localProjects = projectsData.projects || [];
+          const dbProjects = dbData.projects.projects || [];
+          if (dbProjects.length > 0) {
+            projectsData = dbData.projects;
+          } else if (localProjects.length > 0) {
+            // Новый пользователь в БД, но есть локальные данные — синхронизируем
+            projectsData = { projects: localProjects, currentProjectId: projectsData.currentProjectId };
+            saveProjects(); // запишет в БД через sync
+          }
+          localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
+        }
+      } catch(e) { /* БД недоступна — работаем с localStorage */ }
       openWorkbook();
     } else {
       document.getElementById('tg-no-sub').style.display = 'block';
@@ -1624,42 +1667,49 @@ async function regenWithCorrection() {
     showUserBadge(tgUser);
 
     const wp = document.getElementById('welcome-page');
-    const app = document.getElementById('app');
+    const appEl = document.getElementById('app');
     wp.style.display = 'none';
-    app.classList.add('visible');
+    appEl.classList.add('visible');
 
-    if (projectsData.projects.length === 0) {
-      createNewProject();
-      return;
-    }
-
-    if (_cur) {
-      if (state.role) {
-        document.querySelectorAll('#role-chips .chip').forEach(c => {
-          if (c.textContent.trim() === state.role) c.classList.add('selected');
-        });
+    // Грузим свежие данные из БД (фоново, не блокируя UI)
+    fetch('/api/user/load', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ telegram_id: tgUser.id }),
+    }).then(r => r.json()).then(dbData => {
+      if (dbData.projects && (dbData.projects.projects || []).length > 0) {
+        projectsData = dbData.projects;
+        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
       }
-      if (state.size) {
-        document.querySelectorAll('#size-chips .chip').forEach(c => {
-          if (c.textContent.trim() === state.size) c.classList.add('selected');
-        });
-      }
-      document.getElementById('biz').value = state.biz || '';
-      document.getElementById('pain').value = state.pain || '';
-      buildCtxTags('ctx-tags');
-      buildCtxTags('mod-ctx-tags');
-      updateModuleList();
-      updateProjectLabel();
-    }
+      showApp();
+    }).catch(() => showApp());
 
-    if (projectsData.projects.length > 1) {
-      renderProjects();
-      goStep(0);
-    } else if (_cur && (_cur.biz || _cur.pain)) {
-      goStep(3);
-    } else {
-      renderProjects();
-      goStep(0);
+    function showApp() {
+      const cur = projectsData.currentProjectId
+        ? projectsData.projects.find(p => p.id === projectsData.currentProjectId)
+        : null;
+
+      if (projectsData.projects.length === 0) { createNewProject(); return; }
+
+      if (cur) {
+        if (cur.role) document.querySelectorAll('#role-chips .chip').forEach(c => { if (c.textContent.trim() === cur.role) c.classList.add('selected'); });
+        if (cur.size) document.querySelectorAll('#size-chips .chip').forEach(c => { if (c.textContent.trim() === cur.size) c.classList.add('selected'); });
+        document.getElementById('biz').value = cur.biz || '';
+        document.getElementById('pain').value = cur.pain || '';
+        // Обновляем state из свежих данных
+        state.role = cur.role || ''; state.size = cur.size || '';
+        state.biz = cur.biz || ''; state.pain = cur.pain || '';
+        state.correction = cur.correction || '';
+        state.completedModules = cur.completedModules || [];
+        state.answers = cur.answers || {};
+        state.exerciseCache = cur.exerciseCache || {};
+        buildCtxTags('ctx-tags'); buildCtxTags('mod-ctx-tags');
+        updateModuleList(); updateProjectLabel();
+      }
+
+      if (projectsData.projects.length > 1) { renderProjects(); goStep(0); }
+      else if (cur && (cur.biz || cur.pain)) { goStep(3); }
+      else { renderProjects(); goStep(0); }
     }
   } catch(e) {}
 })();
