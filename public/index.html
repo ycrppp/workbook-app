@@ -557,6 +557,73 @@
       margin-bottom: 0.6rem;
     }
 
+    /* USER BADGE (top-right) */
+    .user-badge {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: #222;
+    }
+    .user-name {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* PROJECT LABEL (current project name badge) */
+    .project-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #fa471f;
+      margin-bottom: 0.75rem;
+    }
+    .project-label::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fa471f;
+      flex-shrink: 0;
+    }
+
+    /* PROJECT CARDS */
+    .projects-list { display: flex; flex-direction: column; gap: 3px; margin-bottom: 1.5rem; }
+    .project-card {
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .project-card:hover { background: rgba(255,255,255,0.07); }
+    .project-card.project-current { background: rgba(250,71,31,0.07); border-left-color: #fa471f; }
+    .proj-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .proj-meta { font-size: 12px; color: var(--text3); }
+    .proj-done { color: #6abf6a; }
+
     /* INFO BUTTON */
     .info-btn {
       display: inline-flex;
@@ -659,11 +726,25 @@
   ══════════════════════════════════════════ -->
   <div id="app">
 
+    <!-- ── USER BADGE ──────────────────────────────────────────────────── -->
+    <div class="user-badge" id="user-badge" style="display:none">
+      <img class="user-avatar" id="user-avatar" src="" alt=""/>
+      <span class="user-name" id="user-name"></span>
+    </div>
+
     <div class="progress-wrap">
       <div class="progress-bar">
         <div class="progress-fill" id="prog" style="width: 10%"></div>
       </div>
       <div class="progress-label" id="prog-label">Шаг 1 из 5</div>
+    </div>
+
+    <!-- ── STEP 0: PROJECTS LIST ─────────────────────────────────── -->
+    <div class="step" id="s0">
+      <div class="page-title">Ваши воркбуки</div>
+      <div class="page-sub">Книгу можно проходить несколько раз — под разные контексты. Один воркбук для своей компании, другой для личного развития, третий для конкретного проекта. Упражнения и прогресс у каждого свои.</div>
+      <div class="projects-list" id="projects-list"></div>
+      <button class="btn primary" onclick="createNewProject()">+ Новый воркбук</button>
     </div>
 
     <!-- ── STEP 1: ONBOARDING ─────────────────────────────────── -->
@@ -713,6 +794,7 @@
         <div class="skeleton sk-w55"></div>
       </div>
       <div id="s2-content" style="display:none">
+        <div class="project-label" id="s2-project-label"></div>
         <div class="page-title">Проверьте контекст</div>
         <div class="page-sub">Вот как я понял вашу ситуацию. Если что-то неверно — уточните перед началом, чтобы упражнения точно попали в цель.</div>
         <div class="intro-box" id="s2-summary"></div>
@@ -727,6 +809,7 @@
 
     <!-- ── STEP 3: MODULE MAP ─────────────────────────────────── -->
     <div class="step" id="s3">
+      <div class="project-label" id="s3-project-label"></div>
       <div class="page-title">Ваш план</div>
       <div class="page-sub" id="s2-sub">Воркбук по книге «Искусство действия» — 4 модуля, каждый про вашу конкретную ситуацию.</div>
 
@@ -764,7 +847,7 @@
       </div>
 
       <div class="nav">
-        <button class="edit-ctx" onclick="goStep(2)">← Изменить контекст</button>
+        <button class="edit-ctx" onclick="projectsData.projects.length > 1 ? (renderProjects(), goStep(0)) : goStep(2)">← Назад</button>
         <button class="btn primary" id="start-next-btn" onclick="openModule('gaps')">Начать модуль 1 →</button>
       </div>
     </div>
@@ -948,43 +1031,137 @@ function closeModal() {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+// ─── PROJECTS STORAGE ─────────────────────────────────────────────────────────
+const PROJECTS_KEY = 'workbook_projects_v1';
+
+function genId() {
+  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+}
+
+function projectLabel(p) {
+  const s = p.biz || p.pain || '';
+  return s.trim().length > 3 ? s.trim().slice(0, 50) : 'Воркбук';
+}
+
+function safeEsc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function loadProjects() {
+  try {
+    const raw = localStorage.getItem(PROJECTS_KEY);
+    if (raw) return JSON.parse(raw);
+    // Migrate from old single-project storage
+    const old = localStorage.getItem('workbook_state_v1');
+    if (old) {
+      const p = JSON.parse(old);
+      if (p.biz || p.pain || (p.completedModules && p.completedModules.length)) {
+        const proj = { id: genId(), name: projectLabel(p), createdAt: new Date().toISOString(), ...p };
+        const data = { projects: [proj], currentProjectId: proj.id };
+        localStorage.setItem(PROJECTS_KEY, JSON.stringify(data));
+        return data;
+      }
+    }
+  } catch(e) {}
+  return { projects: [], currentProjectId: null };
+}
+
+function saveProjects() {
+  try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData)); } catch(e) {}
+}
+
+let projectsData = loadProjects();
+const _cur = projectsData.currentProjectId
+  ? projectsData.projects.find(p => p.id === projectsData.currentProjectId)
+  : null;
+
 // ─── STATE ────────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'workbook_state_v1';
-
-function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  return null;
-}
-
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      role: state.role, size: state.size, biz: state.biz, pain: state.pain,
-      correction: state.correction,
-      sessionId: state.sessionId,
-      completedModules: state.completedModules,
-      answers: state.answers,
-      exerciseCache: state.exerciseCache,
-    }));
-  } catch (e) {}
+  const fields = {
+    role: state.role, size: state.size, biz: state.biz, pain: state.pain,
+    correction: state.correction, sessionId: state.sessionId,
+    completedModules: state.completedModules,
+    answers: state.answers, exerciseCache: state.exerciseCache,
+  };
+  if (projectsData.currentProjectId) {
+    const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
+    if (idx >= 0) {
+      projectsData.projects[idx] = { ...projectsData.projects[idx], ...fields, name: projectLabel(state) };
+      saveProjects();
+      return;
+    }
+  }
 }
 
-const _saved = loadState();
 const state = {
-  role: _saved?.role || '',
-  size: _saved?.size || '',
-  biz: _saved?.biz || '',
-  pain: _saved?.pain || '',
-  correction: _saved?.correction || '',
-  sessionId: _saved?.sessionId || 'session_' + Math.random().toString(36).slice(2),
+  role: _cur?.role || '',
+  size: _cur?.size || '',
+  biz: _cur?.biz || '',
+  pain: _cur?.pain || '',
+  correction: _cur?.correction || '',
+  sessionId: _cur?.sessionId || 'session_' + Math.random().toString(36).slice(2),
   currentModule: null,
-  completedModules: _saved?.completedModules || [],
-  answers: _saved?.answers || {},
-  exerciseCache: _saved?.exerciseCache || {},
+  completedModules: _cur?.completedModules || [],
+  answers: _cur?.answers || {},
+  exerciseCache: _cur?.exerciseCache || {},
 };
+
+// ─── PROJECT MANAGEMENT ───────────────────────────────────────────────────────
+function renderProjects() {
+  const list = document.getElementById('projects-list');
+  if (!projectsData.projects.length) { list.innerHTML = ''; return; }
+  list.innerHTML = projectsData.projects.slice().reverse().map(proj => {
+    const done = (proj.completedModules || []).length;
+    const date = new Date(proj.createdAt).toLocaleDateString('ru', { day: 'numeric', month: 'short' });
+    const isCurrent = proj.id === projectsData.currentProjectId;
+    const doneText = done === 4 ? '<span class="proj-done">✓ Завершён</span>' : done + ' из 4 модулей';
+    return `<div class="project-card ${isCurrent ? 'project-current' : ''}" onclick="selectProject('${proj.id}')">
+      <div class="proj-name">${safeEsc(proj.name)}</div>
+      <div class="proj-meta">${doneText} · ${date}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectProject(id) {
+  const proj = projectsData.projects.find(p => p.id === id);
+  if (!proj) return;
+  projectsData.currentProjectId = id;
+  saveProjects();
+  state.role = proj.role || '';
+  state.size = proj.size || '';
+  state.biz = proj.biz || '';
+  state.pain = proj.pain || '';
+  state.correction = proj.correction || '';
+  state.sessionId = proj.sessionId || 'session_' + Math.random().toString(36).slice(2);
+  state.completedModules = proj.completedModules || [];
+  state.answers = proj.answers || {};
+  state.exerciseCache = proj.exerciseCache || {};
+  updateProjectLabel();
+  buildCtxTags('ctx-tags');
+  buildCtxTags('mod-ctx-tags');
+  updateModuleList();
+  goStep(3);
+}
+
+function createNewProject() {
+  const id = genId();
+  const proj = {
+    id, name: 'Новый воркбук', createdAt: new Date().toISOString(),
+    role: '', size: '', biz: '', pain: '', correction: '',
+    sessionId: 'session_' + Math.random().toString(36).slice(2),
+    completedModules: [], answers: {}, exerciseCache: {},
+  };
+  projectsData.projects.push(proj);
+  projectsData.currentProjectId = id;
+  saveProjects();
+  state.role = ''; state.size = ''; state.biz = ''; state.pain = '';
+  state.correction = ''; state.completedModules = []; state.answers = {};
+  state.exerciseCache = {}; state.sessionId = proj.sessionId;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('biz').value = '';
+  document.getElementById('pain').value = '';
+  goStep(1);
+}
 
 const MODULE_ORDER = ['gaps', 'intent', 'cascade', 'independence'];
 const MODULE_NAMES = {
@@ -995,7 +1172,24 @@ const MODULE_NAMES = {
 };
 
 // ─── TELEGRAM AUTH ────────────────────────────────────────────────────────────
+function showUserBadge(user) {
+  if (!user) return;
+  const badge = document.getElementById('user-badge');
+  const avatar = document.getElementById('user-avatar');
+  const nameEl = document.getElementById('user-name');
+  const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || '';
+  nameEl.textContent = name;
+  if (user.photo_url) {
+    avatar.src = user.photo_url;
+    avatar.style.display = 'block';
+  } else {
+    avatar.style.display = 'none';
+  }
+  badge.style.display = 'flex';
+}
+
 async function onTelegramAuth(user) {
+  localStorage.setItem('tg_user', JSON.stringify(user));
   document.getElementById('tg-login-wrap').style.display = 'none';
   document.getElementById('tg-no-sub').style.display = 'none';
   document.getElementById('tg-checking').style.display = 'block';
@@ -1011,6 +1205,7 @@ async function onTelegramAuth(user) {
     document.getElementById('tg-checking').style.display = 'none';
 
     if (data.subscribed) {
+      showUserBadge(user);
       openWorkbook();
     } else {
       document.getElementById('tg-no-sub').style.display = 'block';
@@ -1035,6 +1230,12 @@ function openWorkbook() {
   setTimeout(() => {
     wp.style.display = 'none';
     app.classList.add('visible');
+    if (projectsData.projects.length > 0) {
+      renderProjects();
+      goStep(0);
+    } else {
+      createNewProject();
+    }
   }, 400);
 }
 
@@ -1042,10 +1243,10 @@ function openWorkbook() {
 function goStep(n) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('s' + n).classList.add('active');
-  const pct = { 1: 10, 2: 28, 3: 50, 4: 68, 5: 88 };
-  if (pct[n]) document.getElementById('prog').style.width = pct[n] + '%';
-  const labels = { 1: 'Шаг 1 из 5', 2: 'Шаг 2 из 5', 3: 'Шаг 3 из 5', 4: 'Загрузка...', 5: 'Упражнения' };
-  if (labels[n]) document.getElementById('prog-label').textContent = labels[n];
+  const pct = { 0: 0, 1: 10, 2: 28, 3: 50, 4: 68, 5: 88 };
+  document.getElementById('prog').style.width = (pct[n] ?? 0) + '%';
+  const labels = { 0: 'Ваши воркбуки', 1: 'Шаг 1 из 5', 2: 'Шаг 2 из 5', 3: 'Шаг 3 из 5', 4: 'Загрузка...', 5: 'Упражнения' };
+  if (labels[n] !== undefined) document.getElementById('prog-label').textContent = labels[n];
   window.scrollTo(0, 0);
 }
 
@@ -1094,9 +1295,24 @@ async function submitOnboarding() {
 }
 
 // ─── CONFIRM CONTEXT ──────────────────────────────────────────────────────────
+function updateProjectLabel() {
+  const cur = projectsData.projects.find(p => p.id === projectsData.currentProjectId);
+  const name = cur ? cur.name : '';
+  ['s2-project-label', 's3-project-label'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = name;
+  });
+}
+
 function confirmContext() {
   state.correction = document.getElementById('s2-correction')?.value.trim() || '';
+  // Update project name from biz/pain
+  if (projectsData.currentProjectId) {
+    const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
+    if (idx >= 0) projectsData.projects[idx].name = projectLabel(state);
+  }
   saveState();
+  updateProjectLabel();
   buildCtxTags('ctx-tags');
   buildCtxTags('mod-ctx-tags');
   goStep(3);
@@ -1321,6 +1537,13 @@ async function regenWithCorrection() {
 }
 
 // ─── RESTORE STATE ON LOAD ────────────────────────────────────────────────────
+(function() {
+  try {
+    const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
+    if (tgUser) showUserBadge(tgUser);
+  } catch(e) {}
+})();
+
 if (_saved && (_saved.biz || _saved.pain)) {
   const wp = document.getElementById('welcome-page');
   const app = document.getElementById('app');
