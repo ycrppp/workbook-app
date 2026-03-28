@@ -595,14 +595,14 @@
     .app-header {
       position: fixed;
       top: 0;
-      left: 0;
-      right: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 680px;
       z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      max-width: 680px;
-      margin: 0 auto;
       padding: 14px 1.25rem 0;
       pointer-events: none;
     }
