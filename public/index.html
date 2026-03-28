@@ -1286,32 +1286,39 @@ function safeEsc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function migrateProjectsData(data) {
+  if (!data) return { projects: [], currentProjectId: null, schemaVersion: 1 };
+  // Future migrations go here as schemaVersion increments
+  if (!data.schemaVersion) data.schemaVersion = 1;
+  return data;
+}
+
 function loadProjects() {
   try {
     const raw = localStorage.getItem(PROJECTS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return migrateProjectsData(JSON.parse(raw));
     // Migrate from old single-project storage
     const old = localStorage.getItem('workbook_state_v1');
     if (old) {
       const p = JSON.parse(old);
       if (p.biz || p.pain || (p.completedModules && p.completedModules.length)) {
         const proj = { id: genId(), name: projectLabel(p), createdAt: new Date().toISOString(), ...p };
-        const data = { projects: [proj], currentProjectId: proj.id };
+        const data = migrateProjectsData({ projects: [proj], currentProjectId: proj.id });
         localStorage.setItem(PROJECTS_KEY, JSON.stringify(data));
         return data;
       }
     }
   } catch(e) {}
-  return { projects: [], currentProjectId: null };
+  return { projects: [], currentProjectId: null, schemaVersion: 1 };
 }
 
 let _syncTimer = null;
 
-function syncToDb() {
+async function syncToDb(retries = 2) {
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (!tgUser) return Promise.resolve();
-    return fetch('/api/user/sync', {
+    if (!tgUser) return;
+    const resp = await fetch('/api/user/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1322,8 +1329,17 @@ function syncToDb() {
         photo_url: tgUser.photo_url,
         projects: projectsData,
       }),
-    }).catch(() => {});
-  } catch(e) { return Promise.resolve(); }
+    });
+    if (!resp.ok && retries > 0) {
+      await new Promise(r => setTimeout(r, 2000));
+      return syncToDb(retries - 1);
+    }
+  } catch(e) {
+    if (retries > 0) {
+      await new Promise(r => setTimeout(r, 2000));
+      return syncToDb(retries - 1);
+    }
+  }
 }
 
 function saveProjects() {

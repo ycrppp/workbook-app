@@ -360,6 +360,22 @@ app.post('/api/user/sync', async (req, res) => {
   }
 });
 
+// ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
+app.get('/health', async (req, res) => {
+  const status = { status: 'ok', db: pool ? 'checking' : 'disabled', ts: new Date().toISOString() };
+  if (pool) {
+    try {
+      await pool.query('SELECT 1');
+      status.db = 'ok';
+    } catch (e) {
+      status.db = 'error';
+      status.dbError = e.message;
+      return res.status(503).json(status);
+    }
+  }
+  res.json(status);
+});
+
 // ─── START ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
