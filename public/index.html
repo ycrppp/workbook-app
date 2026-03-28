@@ -197,11 +197,26 @@
       border-radius: 2px;
       transition: width 0.5s ease;
     }
+    .progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
     .progress-label {
       font-size: 12px;
       color: var(--text3);
-      margin-top: 6px;
     }
+    .all-workbooks-btn {
+      background: none;
+      border: none;
+      color: var(--text3);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .all-workbooks-btn:hover { color: var(--text); }
 
     /* STEPS */
     .step { display: none; }
@@ -619,6 +634,17 @@
     .proj-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .proj-meta { font-size: 12px; color: var(--text3); }
     .proj-done { color: #6abf6a; }
+    .proj-rename-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.25);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 500;
+      width: 100%;
+      outline: none;
+      padding: 0 0 2px;
+    }
 
     /* INFO BUTTON */
     .info-btn {
@@ -732,7 +758,10 @@
       <div class="progress-bar">
         <div class="progress-fill" id="prog" style="width: 10%"></div>
       </div>
-      <div class="progress-label" id="prog-label">Шаг 1 из 5</div>
+      <div class="progress-row">
+        <div class="progress-label" id="prog-label">Шаг 1 из 5</div>
+        <button class="all-workbooks-btn" id="all-workbooks-btn" onclick="goToProjectsList()" style="display:none">← Все воркбуки</button>
+      </div>
     </div>
 
     <!-- ── STEP 0: PROJECTS LIST ─────────────────────────────────── -->
@@ -1112,10 +1141,29 @@ function renderProjects() {
     const isCurrent = proj.id === projectsData.currentProjectId;
     const doneText = done === 4 ? '<span class="proj-done">✓ Завершён</span>' : done + ' из 4 модулей';
     return `<div class="project-card ${isCurrent ? 'project-current' : ''}" onclick="selectProject('${proj.id}')">
-      <div class="proj-name">${safeEsc(proj.name)}</div>
+      <div class="proj-name" ondblclick="startRenameProject(event,'${proj.id}')">${safeEsc(proj.name)}</div>
       <div class="proj-meta">${doneText} · ${date}</div>
     </div>`;
   }).join('');
+}
+
+function startRenameProject(e, id) {
+  e.stopPropagation();
+  const nameEl = e.currentTarget;
+  const oldName = nameEl.textContent;
+  nameEl.innerHTML = `<input class="proj-rename-input" value="${safeEsc(oldName)}" maxlength="60"/>`;
+  const input = nameEl.querySelector('input');
+  input.focus();
+  input.select();
+  function save() {
+    const newName = input.value.trim() || oldName;
+    const proj = projectsData.projects.find(p => p.id === id);
+    if (proj) { proj.name = newName; saveProjects(); }
+    renderProjects();
+    if (projectsData.currentProjectId === id) updateProjectLabel();
+  }
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e2 => { if (e2.key === 'Enter') input.blur(); if (e2.key === 'Escape') { input.removeEventListener('blur', save); renderProjects(); } });
 }
 
 function selectProject(id) {
@@ -1243,7 +1291,15 @@ function goStep(n) {
   document.getElementById('prog').style.width = (pct[n] ?? 0) + '%';
   const labels = { 0: 'Ваши воркбуки', 1: 'Шаг 1 из 5', 2: 'Шаг 2 из 5', 3: 'Шаг 3 из 5', 4: 'Загрузка...', 5: 'Упражнения' };
   if (labels[n] !== undefined) document.getElementById('prog-label').textContent = labels[n];
+  const btn = document.getElementById('all-workbooks-btn');
+  btn.style.display = (n > 0 && projectsData.projects.length > 0) ? 'block' : 'none';
   window.scrollTo(0, 0);
+}
+
+function goToProjectsList() {
+  saveState();
+  renderProjects();
+  goStep(0);
 }
 
 // ─── CHIPS ────────────────────────────────────────────────────────────────────
