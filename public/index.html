@@ -448,6 +448,16 @@
       margin-top: 1rem;
       line-height: 1.6;
     }
+    .char-counter {
+      font-size: 12px;
+      color: var(--text3);
+      text-align: right;
+      margin-top: 4px;
+      margin-bottom: 1.25rem;
+      transition: color 0.2s;
+    }
+    .char-counter.warn { color: #f97316; }
+    .char-counter.ok { color: #4ade80; }
 
     /* AI BADGE */
     .ai-badge {
@@ -861,10 +871,12 @@
       </div>
 
       <div class="section-label">Чем занимаетесь</div>
-      <textarea rows="2" id="biz" placeholder="Например: digital-агентство, influence marketing, клиенты — онлайн-образование..."></textarea>
+      <textarea rows="2" id="biz" placeholder="Например: digital-агентство, influence marketing, клиенты — онлайн-образование..." oninput="updateCounter('biz', 'biz-counter')"></textarea>
+      <div class="char-counter" id="biz-counter">0 / мин. 30</div>
 
       <div class="section-label">Главная боль прямо сейчас</div>
-      <textarea rows="3" id="pain" placeholder="Например: всё замыкается на мне, команда не принимает решений самостоятельно, планы расходятся с результатами..."></textarea>
+      <textarea rows="3" id="pain" placeholder="Например: всё замыкается на мне, команда не принимает решений самостоятельно, планы расходятся с результатами..." oninput="updateCounter('pain', 'pain-counter')"></textarea>
+      <div class="char-counter" id="pain-counter">0 / мин. 30</div>
 
       <div id="s1-error"></div>
 
@@ -1646,6 +1658,15 @@ function pick(el, group) {
 }
 
 // ─── ONBOARDING ───────────────────────────────────────────────────────────────
+function updateCounter(fieldId, counterId) {
+  const val = document.getElementById(fieldId).value.trim();
+  const el = document.getElementById(counterId);
+  const len = val.length;
+  const MIN = 30;
+  el.textContent = len >= MIN ? `${len} ✓` : `${len} / мин. ${MIN}`;
+  el.className = 'char-counter' + (len === 0 ? '' : len < MIN ? ' warn' : ' ok');
+}
+
 async function submitOnboarding() {
   state.biz = document.getElementById('biz').value.trim();
   state.pain = document.getElementById('pain').value.trim();
@@ -1663,8 +1684,11 @@ async function submitOnboarding() {
     return;
   }
   if (bizErr || painErr) {
+    const fields = [];
+    if (bizErr) fields.push('«Чем занимаетесь»');
+    if (painErr) fields.push('«Главная боль»');
     document.getElementById('s1-error').innerHTML =
-      '<div class="error-box">Пожалуйста, опишите подробнее — нужно минимум 30 символов. Чем конкретнее, тем точнее будут упражнения.</div>';
+      `<div class="error-box">Опишите подробнее: ${fields.join(' и ')} — нужно минимум 30 символов. Чем конкретнее, тем точнее упражнения.</div>`;
     return;
   }
 
