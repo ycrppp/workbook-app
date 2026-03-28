@@ -17,6 +17,7 @@ jobs:
       - name: Create dump
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGSSLMODE: require
         run: |
           FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
           pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "$FILENAME"
