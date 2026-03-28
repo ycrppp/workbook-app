@@ -1654,8 +1654,10 @@ async function submitOnboarding() {
 
   if (wbName && projectsData.currentProjectId) {
     const proj = projectsData.projects.find(p => p.id === projectsData.currentProjectId);
-    if (proj) { proj.name = wbName; proj.customName = true; saveProjects(); }
+    if (proj) { proj.name = wbName; proj.customName = true; }
   }
+  // Persist biz, pain, name, role, size — all state fields — immediately
+  saveState();
   document.getElementById('s1-error').innerHTML = '';
 
   // Показываем шаг загрузки контекста
@@ -1954,9 +1956,20 @@ async function regenWithCorrection() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ telegram_id: tgUser.id }),
     }).then(r => r.json()).then(dbData => {
-      if (dbData.projects && (dbData.projects.projects || []).length > 0) {
-        projectsData = dbData.projects;
-        localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
+      if (dbData.projects) {
+        const localTs = projectsData.updatedAt || 0;
+        const dbTs = dbData.projects.updatedAt || 0;
+        const dbProjects = dbData.projects.projects || [];
+        if (dbProjects.length > 0 && dbTs >= localTs) {
+          projectsData = dbData.projects;
+          localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
+        } else if (localTs > dbTs && (projectsData.projects || []).length > 0) {
+          // Local is newer (DB sync failed previously) — re-sync to DB
+          saveProjects();
+        } else if (dbProjects.length > 0) {
+          projectsData = dbData.projects;
+          localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData));
+        }
       }
       showApp();
     }).catch(() => showApp());
