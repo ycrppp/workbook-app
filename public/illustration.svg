@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" fill="none">
+  <defs>
+    <!-- Hand-drawn roughness filter -->
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="4" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <!-- Soft ink blur -->
+    <filter id="ink-blur">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="ink-blur-soft">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+
+    <!-- Brush texture for strokes -->
+    <filter id="brush">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- Atmospheric ink wash spots (background mood) -->
+  <ellipse cx="720" cy="160" rx="180" ry="110" fill="rgba(88,110,135,0.07)" filter="url(#ink-blur-soft)"/>
+  <ellipse cx="130" cy="240" rx="140" ry="90" fill="rgba(88,110,135,0.06)" filter="url(#ink-blur-soft)"/>
+  <ellipse cx="460" cy="120" rx="200" ry="80" fill="rgba(88,110,135,0.05)" filter="url(#ink-blur-soft)"/>
+
+  <!-- Sun / moon (hazy circle top-right) -->
+  <circle cx="740" cy="95" r="42" fill="rgba(210,185,140,0.07)" filter="url(#ink-blur)"/>
+  <circle cx="740" cy="95" r="28" fill="rgba(210,185,140,0.08)" filter="url(#ink-blur)"/>
+
+  <!-- Mountain range — layer 1 (farthest, palest) -->
+  <path d="M-10,395
+    Q40,295 100,330
+    Q145,270 195,305
+    Q240,255 285,285
+    Q330,250 370,278
+    Q415,248 450,272
+    Q490,252 530,278
+    Q570,255 610,275
+    Q650,252 685,270
+    Q725,255 760,272
+    Q800,258 840,275
+    Q870,268 910,278
+    L910,480 L-10,480 Z"
+    fill="rgba(155,175,195,0.1)"
+    filter="url(#rough)"/>
+
+  <!-- Mountain range — layer 2 -->
+  <path d="M-10,415
+    Q30,335 85,360
+    Q130,305 185,338
+    Q225,295 265,322
+    Q310,288 355,315
+    Q395,290 435,312
+    Q475,285 515,308
+    Q558,282 595,305
+    Q635,282 670,302
+    Q710,282 748,305
+    Q785,285 830,308
+    Q865,295 910,312
+    L910,480 L-10,480 Z"
+    fill="rgba(120,148,172,0.16)"
+    filter="url(#rough)"/>
+
+  <!-- Mountain range — layer 3 -->
+  <path d="M-10,435
+    Q25,372 68,392
+    Q110,352 158,375
+    Q200,338 242,362
+    Q285,340 320,358
+    Q360,336 395,355
+    Q438,335 472,355
+    Q512,335 545,358
+    Q585,338 618,358
+    Q658,340 690,362
+    Q728,342 762,365
+    Q800,345 840,368
+    Q872,352 910,370
+    L910,480 L-10,480 Z"
+    fill="rgba(88,118,148,0.25)"
+    filter="url(#rough)"/>
+
+  <!-- Mountain range — layer 4 (closest, darkest) -->
+  <path d="M-10,455
+    Q20,428 55,440
+    Q90,418 128,433
+    Q165,412 200,428
+    Q238,412 270,428
+    Q305,412 338,430
+    Q372,414 402,432
+    Q440,415 470,432
+    Q505,416 535,435
+    Q570,418 600,436
+    Q638,418 668,436
+    Q705,418 738,438
+    Q775,420 808,440
+    Q845,422 880,442
+    L910,450 L910,480 L-10,480 Z"
+    fill="rgba(58,82,105,0.42)"
+    filter="url(#rough)"/>
+
+  <!-- Subtle pagoda silhouette (center-left) -->
+  <g filter="url(#rough)" opacity="0.18" fill="rgba(70,95,118,1)">
+    <!-- Tower base -->
+    <rect x="198" y="385" width="18" height="38" rx="1"/>
+    <!-- Tiers -->
+    <polygon points="193,385 207,375 221,385"/>
+    <polygon points="190,375 207,363 224,375"/>
+    <polygon points="187,363 207,350 227,363"/>
+    <polygon points="184,350 207,335 230,350"/>
+    <!-- Finial -->
+    <rect x="205" y="325" width="4" height="12"/>
+  </g>
+
+  <!-- Distant mountain pine trees (silhouette cluster) -->
+  <g filter="url(#rough)" opacity="0.15" fill="rgba(60,88,108,1)">
+    <polygon points="620,372 628,345 636,372"/>
+    <polygon points="632,372 641,340 650,372"/>
+    <polygon points="645,372 655,348 665,372"/>
+    <rect x="624" y="368" width="6" height="6"/>
+    <rect x="638" y="368" width="5" height="6"/>
+    <rect x="651" y="368" width="6" height="6"/>
+  </g>
+
+  <!-- Strategy map overlay — connecting lines (battle map style) -->
+  <g filter="url(#brush)" stroke="rgba(195,160,108,0.32)" stroke-width="1.2" stroke-dasharray="5,4">
+    <line x1="210" y1="278" x2="358" y2="238"/>
+    <line x1="358" y1="238" x2="490" y2="258"/>
+    <line x1="490" y1="258" x2="628" y2="222"/>
+    <line x1="358" y1="238" x2="390" y2="312"/>
+    <line x1="490" y1="258" x2="530" y2="318"/>
+    <line x1="210" y1="278" x2="175" y2="342"/>
+    <line x1="628" y1="222" x2="695" y2="278"/>
+    <line x1="628" y1="222" x2="680" y2="185"/>
+  </g>
+  <!-- Solid accent lines -->
+  <g filter="url(#brush)" stroke="rgba(195,160,108,0.22)" stroke-width="0.8">
+    <line x1="390" y1="312" x2="530" y2="318"/>
+    <line x1="175" y1="342" x2="390" y2="312"/>
+    <line x1="695" y1="278" x2="530" y2="318"/>
+  </g>
+
+  <!-- Strategy nodes — outer rings -->
+  <g stroke="rgba(200,165,112,0.45)" stroke-width="1.2" fill="none">
+    <circle cx="358" cy="238" r="9"/>
+    <circle cx="628" cy="222" r="7"/>
+    <circle cx="210" cy="278" r="6"/>
+    <circle cx="490" cy="258" r="6"/>
+    <circle cx="695" cy="278" r="5"/>
+    <circle cx="390" cy="312" r="5"/>
+    <circle cx="530" cy="318" r="5"/>
+    <circle cx="175" cy="342" r="4"/>
+    <circle cx="680" cy="185" r="4"/>
+  </g>
+  <!-- Inner dots -->
+  <g fill="rgba(200,165,112,0.38)">
+    <circle cx="358" cy="238" r="3.5"/>
+    <circle cx="628" cy="222" r="3"/>
+    <circle cx="210" cy="278" r="2.5"/>
+    <circle cx="490" cy="258" r="2.5"/>
+    <circle cx="695" cy="278" r="2"/>
+    <circle cx="390" cy="312" r="2"/>
+    <circle cx="530" cy="318" r="2"/>
+    <circle cx="175" cy="342" r="1.5"/>
+    <circle cx="680" cy="185" r="1.5"/>
+  </g>
+
+  <!-- Compass rose (subtle, top-right zone) -->
+  <g transform="translate(790, 165)" opacity="0.28" stroke="rgba(195,160,108,1)" fill="none">
+    <circle cx="0" cy="0" r="22" stroke-width="0.8"/>
+    <circle cx="0" cy="0" r="16" stroke-width="0.6" stroke-dasharray="2,5"/>
+    <!-- Cardinal ticks -->
+    <line x1="0" y1="-22" x2="0" y2="-12" stroke-width="1"/>
+    <line x1="0" y1="12" x2="0" y2="22" stroke-width="0.8"/>
+    <line x1="-22" y1="0" x2="-12" y2="0" stroke-width="0.8"/>
+    <line x1="12" y1="0" x2="22" y2="0" stroke-width="0.8"/>
+    <!-- Diagonal ticks -->
+    <line x1="-15" y1="-15" x2="-10" y2="-10" stroke-width="0.6"/>
+    <line x1="10" y1="-10" x2="15" y2="-15" stroke-width="0.6"/>
+    <line x1="-15" y1="15" x2="-10" y2="10" stroke-width="0.6"/>
+    <line x1="10" y1="10" x2="15" y2="15" stroke-width="0.6"/>
+    <!-- North arrow -->
+    <polygon points="0,-20 -3.5,-8 0,-12 3.5,-8" fill="rgba(195,160,108,0.6)" stroke="none"/>
+  </g>
+
+  <!-- Ink brush accent strokes (abstract, decorative) -->
+  <path d="M80,195 Q98,185 112,192 Q105,202 88,200 Q82,198 80,195 Z"
+        fill="rgba(88,115,140,0.18)" filter="url(#brush)"/>
+  <path d="M58,210 Q90,198 118,210 Q100,224 68,218 Q58,215 58,210 Z"
+        fill="rgba(88,115,140,0.12)" filter="url(#brush)"/>
+  <path d="M830,290 Q848,282 858,290 Q850,300 836,297 Z"
+        fill="rgba(88,115,140,0.15)" filter="url(#brush)"/>
+
+  <!-- Scattered ink dots -->
+  <circle cx="142" cy="300" r="2.2" fill="rgba(195,160,108,0.22)"/>
+  <circle cx="455" cy="185" r="1.8" fill="rgba(195,160,108,0.18)"/>
+  <circle cx="582" cy="305" r="2" fill="rgba(195,160,108,0.2)"/>
+  <circle cx="740" cy="248" r="1.5" fill="rgba(195,160,108,0.2)"/>
+  <circle cx="285" cy="195" r="1.5" fill="rgba(195,160,108,0.15)"/>
+
+  <!-- Horizontal grid lines (map grid, very subtle) -->
+  <g stroke="rgba(195,160,108,0.08)" stroke-width="0.6">
+    <line x1="0" y1="200" x2="900" y2="200"/>
+    <line x1="0" y1="260" x2="900" y2="260"/>
+    <line x1="0" y1="320" x2="900" y2="320"/>
+    <line x1="150" y1="160" x2="150" y2="380"/>
+    <line x1="300" y1="160" x2="300" y2="380"/>
+    <line x1="450" y1="160" x2="450" y2="380"/>
+    <line x1="600" y1="160" x2="600" y2="380"/>
+    <line x1="750" y1="160" x2="750" y2="380"/>
+  </g>
+</svg>

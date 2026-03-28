@@ -8,38 +8,20 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #ffffff;
-      --bg2: #f7f6f3;
-      --bg3: #f0efe9;
-      --text: #1a1a1a;
-      --text2: #555;
-      --text3: #999;
-      --border: #e0ddd6;
-      --border2: #ccc;
-      --accent: #1a3a5c;
-      --accent-light: #d6e4f0;
-      --accent-mid: #2e75b6;
-      --success: #2d6a2d;
+      --bg: #1a1a1a;
+      --bg2: #242424;
+      --bg3: #2e2e2e;
+      --text: #f0efe9;
+      --text2: #aaa;
+      --text3: #666;
+      --border: #3a3a3a;
+      --border2: #555;
+      --accent: #2e75b6;
+      --accent-light: #1a2d3f;
+      --accent-mid: #5aa0d8;
+      --success: #6abf6a;
       --radius: 10px;
       --radius-sm: 6px;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #1a1a1a;
-        --bg2: #242424;
-        --bg3: #2e2e2e;
-        --text: #f0efe9;
-        --text2: #aaa;
-        --text3: #666;
-        --border: #3a3a3a;
-        --border2: #555;
-        --accent: #2e75b6;
-        --accent-light: #1a2d3f;
-        --accent-mid: #5aa0d8;
-        --success: #6abf6a;
-      }
-
     }
 
     body {
@@ -56,13 +38,15 @@
     #welcome-page {
       position: fixed;
       inset: 0;
-      background: var(--bg);
+      background-color: #0c0c0c;
+      background-image: radial-gradient(ellipse 90% 50% at 50% -5%, rgba(220,90,30,0.15) 0%, transparent 70%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 2rem 1.5rem;
       z-index: 100;
+      overflow: hidden;
       transition: opacity 0.4s ease, transform 0.4s ease;
     }
     #welcome-page.hiding {
@@ -76,77 +60,84 @@
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 400;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text3);
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 5px 14px;
-      margin-bottom: 2.25rem;
+      letter-spacing: 0.18em;
+      color: rgba(255,255,255,0.4);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50px;
+      padding: 5px 16px;
+      margin-bottom: 2rem;
     }
-    .w-badge em { color: var(--accent-mid); font-style: normal; }
+    .w-badge em { color: #fa471f; font-style: normal; }
 
     .w-icon {
-      width: 72px;
-      height: 72px;
-      background: var(--accent-light);
-      border-radius: 20px;
+      width: 68px;
+      height: 68px;
+      background: rgba(250,71,31,0.1);
+      border: 1px solid rgba(250,71,31,0.25);
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 30px;
       margin-bottom: 1.75rem;
-      box-shadow: 0 2px 12px rgba(46,117,182,0.15);
+      box-shadow: 0 0 32px rgba(250,71,31,0.15);
     }
 
     .w-title {
-      font-size: 30px;
+      font-size: 34px;
       font-weight: 700;
-      color: var(--text);
+      color: #ffffff;
       text-align: center;
-      line-height: 1.25;
-      margin-bottom: 0.85rem;
-      max-width: 440px;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      margin-bottom: 1rem;
+      max-width: 460px;
     }
 
     .w-sub {
       font-size: 16px;
-      color: var(--text2);
+      font-weight: 300;
+      color: rgba(255,255,255,0.5);
       text-align: center;
       line-height: 1.7;
-      max-width: 460px;
+      letter-spacing: -0.2px;
+      max-width: 440px;
       margin-bottom: 2.5rem;
     }
 
     .w-cta {
-      padding: 14px 40px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: var(--radius-sm);
-      background: var(--accent);
-      color: #fff;
-      border: none;
+      padding: 12px 32px;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 50px;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ffffff;
       cursor: pointer;
       font-family: inherit;
-      transition: opacity 0.15s, transform 0.1s;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
       margin-bottom: 0.85rem;
-      letter-spacing: 0.01em;
+      letter-spacing: -0.2px;
+      text-decoration: none;
+      display: inline-block;
     }
-    .w-cta:hover { opacity: 0.88; transform: translateY(-1px); }
-    .w-cta:active { transform: translateY(0); }
+    .w-cta:hover { background: #fa471f; border-color: #fa471f; color: #ffffff; }
 
     .w-hint {
       font-size: 12px;
-      color: var(--text3);
-      margin-bottom: 3rem;
+      font-weight: 300;
+      color: rgba(255,255,255,0.28);
+      margin-bottom: 2.5rem;
       text-align: center;
+      letter-spacing: 0.02em;
     }
 
     .w-features {
       display: flex;
-      gap: 12px;
+      gap: 1px;
       flex-wrap: wrap;
       justify-content: center;
       width: 100%;
@@ -157,20 +148,20 @@
       align-items: flex-start;
       gap: 10px;
       padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg2);
+      border: none;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.05);
       text-align: left;
       flex: 1;
       min-width: 160px;
       max-width: 180px;
     }
-    .wf-icon { font-size: 18px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
-    .wf-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .wf-sub { font-size: 12px; color: var(--text2); line-height: 1.55; }
+    .wf-icon { font-size: 16px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .wf-title { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.85); margin-bottom: 3px; letter-spacing: -0.2px; }
+    .wf-sub { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.4); line-height: 1.55; }
 
     @media (max-width: 480px) {
-      .w-title { font-size: 24px; }
+      .w-title { font-size: 26px; }
       .w-sub { font-size: 15px; }
       .w-features { flex-direction: column; align-items: stretch; }
       .w-feat { max-width: 100%; }
@@ -372,7 +363,7 @@
     .module-item:hover:not(.locked) { border-color: var(--border2); background: var(--bg2); }
     .module-item.locked { opacity: 0.4; cursor: default; }
     .module-item.current { border-color: var(--accent-mid); background: var(--accent-light); }
-    .module-item.done { border-color: #c3d9c3; background: #f3faf3; }
+    .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
     .module-name { font-size: 14px; font-weight: 500; color: var(--text); }
     .module-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
     .module-badge {
@@ -382,12 +373,7 @@
       flex-shrink: 0;
     }
     .badge-current { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-mid); }
-    .badge-done { background: #e8f5e8; color: var(--success); border: 1px solid #c3d9c3; }
-
-    @media (prefers-color-scheme: dark) {
-      .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
-      .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
-    }
+    .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
     .badge-locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
 
     /* CONTEXT TAGS */
@@ -620,9 +606,9 @@
     <div class="w-title">Искусство действия</div>
     <div class="w-sub">Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом.</div>
 
-    <div id="tg-login-wrap">
-      <div style="font-size:13px; color:var(--text2); margin-bottom:0.75rem; line-height:1.5;">
-        Авторизуйтесь и подпишитесь на телеграм-канал <a href="https://t.me/m_cult_members" target="_blank" style="color:var(--accent);">@m_cult_members</a>, чтобы использовать воркбук
+    <div id="tg-login-wrap" style="text-align:center;">
+      <div style="font-size:13px; font-weight:300; color:rgba(255,255,255,0.45); margin-bottom:0.75rem; line-height:1.6; letter-spacing:-0.1px;">
+        Авторизуйтесь и подпишитесь на телеграм-канал <a href="https://t.me/m_cult_members" target="_blank" style="color:#fa471f; text-decoration:none;">@m_cult_members</a>, чтобы использовать воркбук
       </div>
       <script async src="https://telegram.org/js/telegram-widget.js?22"
         data-telegram-login="wrkbook_bot"
@@ -640,7 +626,7 @@
       <div><button class="edit-ctx" onclick="retryAuth()">Я подписался — проверить снова</button></div>
     </div>
     <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
-    <button onclick="openModal('book')" style="margin-top:1rem; margin-bottom:2rem; background:var(--accent-light); border:1px solid var(--accent-mid); color:var(--accent); padding:9px 20px; border-radius:20px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition:all 0.15s;">📖 Что за книга? →</button>
+    <button onclick="openModal('book')" style="margin-top:1rem; margin-bottom:2rem; background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:9px 24px; border-radius:50px; font-size:13px; font-weight:400; cursor:pointer; font-family:inherit; letter-spacing:0.02em; transition:all 0.15s;" onmouseover="this.style.borderColor='#fa471f';this.style.color='#fa471f'" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">Что за книга? →</button>
     <div class="w-features">
       <div class="w-feat">
         <div class="wf-icon">🎯</div>
