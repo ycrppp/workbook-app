@@ -200,6 +200,11 @@
       <div class="card-value" id="stat-projects">—</div>
       <div class="card-sub">среднее созданных</div>
     </div>
+    <div class="card">
+      <div class="card-label">Заходов на пользователя</div>
+      <div class="card-value" id="stat-logins">—</div>
+      <div class="card-sub">среднее открытий приложения</div>
+    </div>
   </div>
 
   <!-- Chart -->
@@ -367,6 +372,7 @@
     document.getElementById('stat-range').textContent    = statsData.inRange  ?? '—';
     document.getElementById('stat-modules').textContent  = statsData.avgModules  ?? '—';
     document.getElementById('stat-projects').textContent = statsData.avgProjects ?? '—';
+    document.getElementById('stat-logins').textContent   = statsData.avgLogins   ?? '—';
 
     // Подпись к карточке "За период"
     let label = 'за всё время';

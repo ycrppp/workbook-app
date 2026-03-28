@@ -28,6 +28,10 @@ async function initDb() {
         updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    // Добавляем login_count если ещё нет (безопасно для существующей БД)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0
+    `);
     console.log('[db] table ready');
   } catch (e) {
     console.error('[db] init error:', e.message);
@@ -332,7 +336,11 @@ app.post('/api/user/load', async (req, res) => {
   const { telegram_id } = req.body;
   if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
   try {
-    const result = await pool.query('SELECT projects FROM users WHERE telegram_id = $1', [telegram_id]);
+    const result = await pool.query(
+      `UPDATE users SET login_count = login_count + 1 WHERE telegram_id = $1
+       RETURNING projects, login_count`,
+      [telegram_id]
+    );
     if (result.rows.length === 0) {
       res.json({ projects: { projects: [], currentProjectId: null }, isNew: true });
     } else {
@@ -406,7 +414,7 @@ app.get('/api/admin/stats', async (req, res) => {
       : '';
     const rangeParams = from && to ? [from, to] : from ? [from] : to ? [to] : [];
 
-    const [byDay, byWeek, byMonth, avgModules, avgProjects, total, inRange] = await Promise.all([
+    const [byDay, byWeek, byMonth, avgModules, avgProjects, total, inRange, avgLogins] = await Promise.all([
       // По дням
       pool.query(
         `SELECT TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
@@ -447,6 +455,10 @@ app.get('/api/admin/stats', async (req, res) => {
         `SELECT COUNT(*)::int AS count FROM users WHERE 1=1 ${rangeWhere}`,
         rangeParams
       ),
+      // Среднее кол-во заходов на пользователя
+      pool.query(`
+        SELECT ROUND(AVG(login_count)::numeric, 1)::float AS avg FROM users WHERE login_count > 0
+      `),
     ]);
 
     res.json({
@@ -457,6 +469,7 @@ app.get('/api/admin/stats', async (req, res) => {
       byMonth:     byMonth.rows,
       avgModules:  avgModules.rows[0].avg  ?? 0,
       avgProjects: avgProjects.rows[0].avg ?? 0,
+      avgLogins:   avgLogins.rows[0].avg   ?? 0,
       from: req.query.from || null,
       to:   req.query.to   || null,
     });
