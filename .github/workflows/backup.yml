@@ -26,7 +26,7 @@ jobs:
           PGSSLMODE: require
         run: |
           FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "$FILENAME"
+          /usr/lib/postgresql/18/bin/pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "$FILENAME"
           echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
           echo "Size: $(du -sh $FILENAME | cut -f1)"
 
