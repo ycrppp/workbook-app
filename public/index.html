@@ -41,7 +41,6 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-    body.welcome-active { overflow: hidden; }
 
     /* ═══════════════════════════════════════════
        WELCOME PAGE — full-screen overlay
@@ -593,8 +592,6 @@
       margin-bottom: 0.6rem;
     }
 
-    body.welcome-active .app-header { display: none; }
-
     /* HEADER BAR */
     .app-header {
       position: fixed;
@@ -840,7 +837,7 @@
     } catch(e) {}
   </script>
 </head>
-<body class="welcome-active">
+<body>
 
   <!-- ══════════════════════════════════════════
        MODAL
@@ -1758,7 +1755,6 @@ function openWorkbook() {
   const wp = document.getElementById('welcome-page');
   const app = document.getElementById('app');
   wp.classList.add('hiding');
-  document.body.classList.remove('welcome-active');
   setTimeout(() => {
     wp.style.display = 'none';
     app.classList.add('visible');
