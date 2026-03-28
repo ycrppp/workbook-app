@@ -1191,8 +1191,9 @@ function renderProjects() {
 
 function startRenameProject(e, id) {
   e.stopPropagation();
-  const nameEl = e.currentTarget;
-  const oldName = nameEl.textContent;
+  const card = e.currentTarget.closest('.project-card');
+  const nameEl = card.querySelector('.proj-name');
+  const oldName = nameEl.textContent.trim();
   nameEl.innerHTML = `<input class="proj-rename-input" value="${safeEsc(oldName)}" maxlength="60"/>`;
   const input = nameEl.querySelector('input');
   input.focus();
