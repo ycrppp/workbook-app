@@ -394,29 +394,38 @@ app.get('/api/admin/stats', async (req, res) => {
   }
   if (!pool) return res.status(503).json({ error: 'No database' });
   try {
-    const [byDay, byWeek, byMonth, avgModules, avgProjects, total] = await Promise.all([
-      // Новые пользователи по дням (последние 30 дней)
-      pool.query(`
-        SELECT TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
-        FROM users
-        WHERE created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY label ORDER BY label
-      `),
-      // По неделям (последние 12 недель)
-      pool.query(`
-        SELECT TO_CHAR(DATE_TRUNC('week', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
-        FROM users
-        WHERE created_at >= NOW() - INTERVAL '12 weeks'
-        GROUP BY label ORDER BY label
-      `),
-      // По месяцам (последние 12 месяцев)
-      pool.query(`
-        SELECT TO_CHAR(DATE_TRUNC('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS label, COUNT(*)::int AS count
-        FROM users
-        WHERE created_at >= NOW() - INTERVAL '12 months'
-        GROUP BY label ORDER BY label
-      `),
-      // Среднее кол-во пройденных модулей на пользователя
+    // Опциональный диапазон дат из query params (YYYY-MM-DD)
+    const from = req.query.from ? new Date(req.query.from) : null;
+    const to   = req.query.to   ? new Date(req.query.to + 'T23:59:59Z') : null;
+
+    // Условие WHERE для диапазона
+    const rangeWhere = from && to
+      ? `AND created_at BETWEEN $1 AND $2`
+      : from ? `AND created_at >= $1`
+      : to   ? `AND created_at <= $1`
+      : '';
+    const rangeParams = from && to ? [from, to] : from ? [from] : to ? [to] : [];
+
+    const [byDay, byWeek, byMonth, avgModules, avgProjects, total, inRange] = await Promise.all([
+      // По дням
+      pool.query(
+        `SELECT TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
+         FROM users WHERE 1=1 ${rangeWhere} GROUP BY label ORDER BY label`,
+        rangeParams
+      ),
+      // По неделям
+      pool.query(
+        `SELECT TO_CHAR(DATE_TRUNC('week', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS label, COUNT(*)::int AS count
+         FROM users WHERE 1=1 ${rangeWhere} GROUP BY label ORDER BY label`,
+        rangeParams
+      ),
+      // По месяцам
+      pool.query(
+        `SELECT TO_CHAR(DATE_TRUNC('month', created_at AT TIME ZONE 'UTC'), 'YYYY-MM') AS label, COUNT(*)::int AS count
+         FROM users WHERE 1=1 ${rangeWhere} GROUP BY label ORDER BY label`,
+        rangeParams
+      ),
+      // Среднее модулей (по всем пользователям, без фильтра периода)
       pool.query(`
         SELECT ROUND(AVG(modules_count)::numeric, 1)::float AS avg
         FROM (
@@ -426,23 +435,30 @@ app.get('/api/admin/stats', async (req, res) => {
           GROUP BY telegram_id
         ) t
       `),
-      // Среднее кол-во проектов на пользователя
+      // Среднее воркбуков (по всем пользователям)
       pool.query(`
         SELECT ROUND(AVG(jsonb_array_length(projects->'projects'))::numeric, 1)::float AS avg
-        FROM users
-        WHERE jsonb_array_length(projects->'projects') > 0
+        FROM users WHERE jsonb_array_length(projects->'projects') > 0
       `),
-      // Всего пользователей
+      // Всего пользователей (всего)
       pool.query(`SELECT COUNT(*)::int AS count FROM users`),
+      // Пользователей за выбранный период
+      pool.query(
+        `SELECT COUNT(*)::int AS count FROM users WHERE 1=1 ${rangeWhere}`,
+        rangeParams
+      ),
     ]);
 
     res.json({
-      total: total.rows[0].count,
-      byDay: byDay.rows,
-      byWeek: byWeek.rows,
-      byMonth: byMonth.rows,
-      avgModules: avgModules.rows[0].avg ?? 0,
+      total:       total.rows[0].count,
+      inRange:     inRange.rows[0].count,
+      byDay:       byDay.rows,
+      byWeek:      byWeek.rows,
+      byMonth:     byMonth.rows,
+      avgModules:  avgModules.rows[0].avg  ?? 0,
       avgProjects: avgProjects.rows[0].avg ?? 0,
+      from: req.query.from || null,
+      to:   req.query.to   || null,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

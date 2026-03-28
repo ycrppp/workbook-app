@@ -7,232 +7,248 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg: #0c0c0c;
       --surface: #1a1a1a;
-      --surface2: #222;
       --border: rgba(255,255,255,0.08);
       --text: #f0f0f0;
-      --text2: rgba(255,255,255,0.45);
+      --text2: rgba(255,255,255,0.4);
       --accent: #fa471f;
     }
-
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 15px;
-      line-height: 1.5;
       min-height: 100vh;
     }
 
-    /* ── LOGIN ── */
+    /* ── LOGIN ─────────────────────────────────────────────────────────── */
     #login-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 1rem;
-      padding: 2rem;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 1rem; padding: 2rem;
     }
-    #login-screen h1 { font-size: 22px; font-weight: 600; }
+    #login-screen h1 { font-size: 22px; font-weight: 700; }
     #login-screen p  { color: var(--text2); font-size: 13px; }
     #secret-input {
-      width: 100%;
-      max-width: 320px;
-      padding: 10px 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
+      width: 100%; max-width: 320px; padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px; outline: none;
     }
     #secret-input:focus { border-color: var(--accent); }
     #login-btn {
-      padding: 10px 28px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
+      padding: 10px 32px; background: var(--accent); color: #fff;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
     }
     #login-error { color: #ff5555; font-size: 13px; display: none; }
 
-    /* ── DASHBOARD ── */
-    #dashboard { display: none; max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    /* ── DASHBOARD ─────────────────────────────────────────────────────── */
+    #dashboard { display: none; max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 2rem;
+    /* ── HEADER ────────────────────────────────────────────────────────── */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.75rem; gap: 12px; flex-wrap: wrap;
     }
-    header h1 { font-size: 20px; font-weight: 700; }
-    #logout-btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text2);
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    #logout-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── CARDS ── */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 2rem;
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem 1.5rem;
-    }
-    .card-label { font-size: 12px; color: var(--text2); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.5rem; }
-    .card-value { font-size: 32px; font-weight: 700; line-height: 1; }
-    .card-sub   { font-size: 12px; color: var(--text2); margin-top: 0.4rem; }
-
-    /* ── CHART SECTION ── */
-    .section { margin-bottom: 2rem; }
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .section-title { font-size: 15px; font-weight: 600; }
-    .tabs { display: flex; gap: 4px; }
-    .tab {
-      padding: 5px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      border: 1px solid var(--border);
-      background: none;
-      color: var(--text2);
-      cursor: pointer;
+    .top-bar h1 { font-size: 20px; font-weight: 700; }
+    .top-bar-right { display: flex; align-items: center; gap: 10px; }
+    #refresh-info { font-size: 12px; color: var(--text2); }
+    #refresh-btn {
+      background: none; border: 1px solid var(--border); color: var(--text2);
+      padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
       transition: all 0.15s;
     }
-    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .chart-wrap {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem;
-      position: relative;
-      height: 280px;
+    #refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #logout-btn {
+      background: none; border: 1px solid var(--border); color: var(--text2);
+      padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer;
+    }
+    #logout-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    /* ── PERIOD SELECTOR ───────────────────────────────────────────────── */
+    .period-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 1.5rem; padding: 12px 16px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    }
+    .period-label { font-size: 12px; color: var(--text2); margin-right: 4px; white-space: nowrap; }
+    .preset-btn {
+      padding: 5px 12px; border-radius: 8px; font-size: 13px;
+      border: 1px solid var(--border); background: none; color: var(--text2);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .preset-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .preset-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .period-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+    .date-range { display: flex; align-items: center; gap: 6px; }
+    .date-input {
+      padding: 5px 10px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 13px; outline: none;
+      width: 130px;
+    }
+    .date-input:focus { border-color: var(--accent); }
+    .date-sep { color: var(--text2); font-size: 12px; }
+    .apply-btn {
+      padding: 5px 14px; background: var(--accent); border: none; border-radius: 8px;
+      color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
     }
 
-    /* ── LOADING ── */
-    .spinner {
-      display: inline-block;
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.15);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
+    /* ── CARDS ─────────────────────────────────────────────────────────── */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 1.75rem; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.25rem 1.5rem;
     }
+    .card-label { font-size: 11px; color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .card-value { font-size: 34px; font-weight: 700; line-height: 1; }
+    .card-sub   { font-size: 12px; color: var(--text2); margin-top: 0.4rem; }
+    .card.accent { border-color: rgba(250,71,31,0.3); }
+    .card.accent .card-value { color: var(--accent); }
+
+    /* ── CHART ─────────────────────────────────────────────────────────── */
+    .section { margin-bottom: 1.5rem; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+    }
+    .section-title { font-size: 14px; font-weight: 600; color: var(--text2); letter-spacing: 0.04em; text-transform: uppercase; }
+    .group-tabs { display: flex; gap: 4px; }
+    .gtab {
+      padding: 4px 12px; border-radius: 7px; font-size: 12px;
+      border: 1px solid var(--border); background: none; color: var(--text2);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .gtab.active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .chart-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.25rem; height: 280px; position: relative;
+    }
+    .no-data {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--text2); font-size: 14px; display: none;
+    }
+
+    /* ── MISC ──────────────────────────────────────────────────────────── */
     @keyframes spin { to { transform: rotate(360deg); } }
-    #loading { display: none; color: var(--text2); font-size: 14px; text-align: center; padding: 3rem; }
+    .spin {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.12); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+    }
+    .updating { opacity: 0.5; pointer-events: none; }
   </style>
 </head>
 <body>
 
-<!-- ── LOGIN ── -->
+<!-- LOGIN -->
 <div id="login-screen">
   <h1>Workbook Admin</h1>
-  <p>Введи секретный ключ (BACKUP_SECRET)</p>
+  <p>Введи BACKUP_SECRET для доступа</p>
   <input id="secret-input" type="password" placeholder="••••••••••••" autocomplete="off" />
   <button id="login-btn">Войти</button>
   <div id="login-error">Неверный ключ или ошибка сервера</div>
 </div>
 
-<!-- ── DASHBOARD ── -->
+<!-- DASHBOARD -->
 <div id="dashboard">
-  <header>
+
+  <div class="top-bar">
     <h1>📊 Статистика</h1>
-    <button id="logout-btn">Выйти</button>
-  </header>
+    <div class="top-bar-right">
+      <span id="refresh-info"></span>
+      <button id="refresh-btn">↺ Обновить</button>
+      <button id="logout-btn">Выйти</button>
+    </div>
+  </div>
 
-  <div id="loading"><span class="spinner"></span> Загружаю данные...</div>
+  <!-- Period selector -->
+  <div class="period-bar">
+    <span class="period-label">Период:</span>
+    <button class="preset-btn" data-preset="7d">7 дней</button>
+    <button class="preset-btn active" data-preset="30d">30 дней</button>
+    <button class="preset-btn" data-preset="90d">90 дней</button>
+    <button class="preset-btn" data-preset="12m">12 месяцев</button>
+    <button class="preset-btn" data-preset="all">Всё время</button>
+    <div class="period-divider"></div>
+    <div class="date-range">
+      <input type="date" id="date-from" class="date-input" />
+      <span class="date-sep">—</span>
+      <input type="date" id="date-to" class="date-input" />
+      <button class="apply-btn" id="apply-range">Применить</button>
+    </div>
+  </div>
 
-  <div id="stats-body" style="display:none">
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Всего пользователей</div>
+      <div class="card-value" id="stat-total">—</div>
+      <div class="card-sub">за всё время</div>
+    </div>
+    <div class="card accent">
+      <div class="card-label">За период</div>
+      <div class="card-value" id="stat-range">—</div>
+      <div class="card-sub" id="stat-range-label">новых пользователей</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Модулей на пользователя</div>
+      <div class="card-value" id="stat-modules">—</div>
+      <div class="card-sub">среднее завершённых</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Воркбуков на пользователя</div>
+      <div class="card-value" id="stat-projects">—</div>
+      <div class="card-sub">среднее созданных</div>
+    </div>
+  </div>
 
-    <!-- Карточки -->
-    <div class="cards">
-      <div class="card">
-        <div class="card-label">Всего пользователей</div>
-        <div class="card-value" id="stat-total">—</div>
-        <div class="card-sub">с момента запуска</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Модулей на пользователя</div>
-        <div class="card-value" id="stat-modules">—</div>
-        <div class="card-sub">среднее завершённых</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Воркбуков на пользователя</div>
-        <div class="card-value" id="stat-projects">—</div>
-        <div class="card-sub">среднее созданных</div>
+  <!-- Chart -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Новые пользователи</div>
+      <div class="group-tabs">
+        <button class="gtab active" data-group="day">По дням</button>
+        <button class="gtab" data-group="week">По неделям</button>
+        <button class="gtab" data-group="month">По месяцам</button>
       </div>
     </div>
-
-    <!-- График новых пользователей -->
-    <div class="section">
-      <div class="section-header">
-        <div class="section-title">Новые пользователи</div>
-        <div class="tabs">
-          <button class="tab active" data-period="day">По дням</button>
-          <button class="tab" data-period="week">По неделям</button>
-          <button class="tab" data-period="month">По месяцам</button>
-        </div>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="users-chart"></canvas>
-      </div>
+    <div class="chart-wrap">
+      <canvas id="users-chart"></canvas>
+      <div class="no-data" id="no-data">Нет данных за этот период</div>
     </div>
+  </div>
 
-  </div><!-- /stats-body -->
-</div><!-- /dashboard -->
+  <div style="font-size:12px; color:var(--text2); text-align:center; margin-top:1rem" id="last-updated"></div>
+</div>
 
 <script>
-  const APP_URL = '';  // пустая строка = тот же origin (работает и локально и на Railway)
   let secret = '';
   let statsData = null;
   let chart = null;
+  let currentGroup = 'day';
+  let currentFrom = null;
+  let currentTo = null;
+  let refreshTimer = null;
+  let countdownInterval = null;
+  const REFRESH_SEC = 60;
 
-  // ── AUTH ──────────────────────────────────────────────────────────────────────
+  // ── AUTH ────────────────────────────────────────────────────────────────────
   document.getElementById('login-btn').addEventListener('click', tryLogin);
   document.getElementById('secret-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 
   async function tryLogin() {
-    const input = document.getElementById('secret-input').value.trim();
-    if (!input) return;
+    const val = document.getElementById('secret-input').value.trim();
+    if (!val) return;
     document.getElementById('login-error').style.display = 'none';
     document.getElementById('login-btn').textContent = 'Проверяю...';
-
     try {
-      const res = await fetch(`${APP_URL}/api/admin/stats`, {
-        headers: { 'x-backup-secret': input }
-      });
-      if (!res.ok) throw new Error('Unauthorized');
-      secret = input;
+      const data = await loadStats(val, null, null);
+      secret = val;
       sessionStorage.setItem('admin_secret', secret);
-      statsData = await res.json();
+      statsData = data;
+      applyPreset('30d');
       showDashboard();
-    } catch (e) {
+    } catch {
       document.getElementById('login-error').style.display = 'block';
     } finally {
       document.getElementById('login-btn').textContent = 'Войти';
@@ -242,38 +258,145 @@
   document.getElementById('logout-btn').addEventListener('click', () => {
     secret = '';
     sessionStorage.removeItem('admin_secret');
+    stopAutoRefresh();
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('secret-input').value = '';
   });
 
-  // ── DASHBOARD ────────────────────────────────────────────────────────────────
-  function showDashboard() {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-
-    document.getElementById('stat-total').textContent   = statsData.total ?? '—';
-    document.getElementById('stat-modules').textContent = statsData.avgModules ?? '—';
-    document.getElementById('stat-projects').textContent = statsData.avgProjects ?? '—';
-
-    document.getElementById('stats-body').style.display = 'block';
-    renderChart('day');
+  // ── LOAD DATA ───────────────────────────────────────────────────────────────
+  async function loadStats(sec, from, to) {
+    let url = '/api/admin/stats';
+    const params = [];
+    if (from) params.push('from=' + from);
+    if (to)   params.push('to='   + to);
+    if (params.length) url += '?' + params.join('&');
+    const res = await fetch(url, { headers: { 'x-backup-secret': sec } });
+    if (!res.ok) throw new Error('Unauthorized');
+    return res.json();
   }
 
-  // ── CHART ────────────────────────────────────────────────────────────────────
-  function renderChart(period) {
-    const raw = statsData[period === 'day' ? 'byDay' : period === 'week' ? 'byWeek' : 'byMonth'] || [];
+  async function refresh(showSpinner = false) {
+    if (showSpinner) document.getElementById('dashboard').classList.add('updating');
+    try {
+      statsData = await loadStats(secret, currentFrom, currentTo);
+      renderCards();
+      renderChart();
+      document.getElementById('last-updated').textContent =
+        'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
+    } catch { /* молча */ }
+    finally {
+      document.getElementById('dashboard').classList.remove('updating');
+    }
+  }
+
+  // ── AUTO-REFRESH ────────────────────────────────────────────────────────────
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    let remaining = REFRESH_SEC;
+
+    countdownInterval = setInterval(() => {
+      remaining--;
+      document.getElementById('refresh-info').textContent =
+        remaining > 0 ? `обновление через ${remaining}с` : '';
+      if (remaining <= 0) remaining = REFRESH_SEC;
+    }, 1000);
+
+    refreshTimer = setInterval(() => {
+      remaining = REFRESH_SEC;
+      refresh();
+    }, REFRESH_SEC * 1000);
+  }
+
+  function stopAutoRefresh() {
+    clearInterval(refreshTimer);
+    clearInterval(countdownInterval);
+    refreshTimer = null;
+    countdownInterval = null;
+  }
+
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    stopAutoRefresh();
+    refresh(true).then(startAutoRefresh);
+  });
+
+  // ── PERIOD PRESETS ──────────────────────────────────────────────────────────
+  function applyPreset(preset) {
+    const today = new Date();
+    const fmt = d => d.toISOString().slice(0, 10);
+    const toStr = fmt(today);
+
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === preset));
+    document.getElementById('date-from').value = '';
+    document.getElementById('date-to').value   = '';
+
+    if (preset === 'all') {
+      currentFrom = null;
+      currentTo   = null;
+    } else {
+      const from = new Date(today);
+      if      (preset === '7d')  from.setDate(today.getDate() - 6);
+      else if (preset === '30d') from.setDate(today.getDate() - 29);
+      else if (preset === '90d') from.setDate(today.getDate() - 89);
+      else if (preset === '12m') from.setFullYear(today.getFullYear() - 1);
+      currentFrom = fmt(from);
+      currentTo   = toStr;
+    }
+  }
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      applyPreset(btn.dataset.preset);
+      await refresh(true);
+    });
+  });
+
+  document.getElementById('apply-range').addEventListener('click', async () => {
+    const from = document.getElementById('date-from').value;
+    const to   = document.getElementById('date-to').value;
+    if (!from && !to) return;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    currentFrom = from || null;
+    currentTo   = to   || null;
+    await refresh(true);
+  });
+
+  // ── RENDER ──────────────────────────────────────────────────────────────────
+  function renderCards() {
+    document.getElementById('stat-total').textContent    = statsData.total    ?? '—';
+    document.getElementById('stat-range').textContent    = statsData.inRange  ?? '—';
+    document.getElementById('stat-modules').textContent  = statsData.avgModules  ?? '—';
+    document.getElementById('stat-projects').textContent = statsData.avgProjects ?? '—';
+
+    // Подпись к карточке "За период"
+    let label = 'за всё время';
+    if (currentFrom && currentTo)   label = `${currentFrom} — ${currentTo}`;
+    else if (currentFrom)           label = `с ${currentFrom}`;
+    else if (currentTo)             label = `до ${currentTo}`;
+    document.getElementById('stat-range-label').textContent = label;
+  }
+
+  function renderChart() {
+    const key = currentGroup === 'day' ? 'byDay' : currentGroup === 'week' ? 'byWeek' : 'byMonth';
+    const raw = statsData[key] || [];
+    const noDataEl = document.getElementById('no-data');
+
+    if (!raw.length) {
+      noDataEl.style.display = 'flex';
+      if (chart) { chart.destroy(); chart = null; }
+      return;
+    }
+    noDataEl.style.display = 'none';
 
     const labels = raw.map(r => {
-      if (period === 'day') {
+      if (currentGroup === 'day') {
+        return new Date(r.label + 'T00:00:00Z').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+      } else if (currentGroup === 'week') {
         const d = new Date(r.label + 'T00:00:00Z');
         return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-      } else if (period === 'week') {
-        const d = new Date(r.label + 'T00:00:00Z');
-        return 'Нед. ' + d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' });
       } else {
         const [y, m] = r.label.split('-');
-        return new Date(+y, +m - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+        return new Date(+y, +m - 1, 1).toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' });
       }
     });
     const values = raw.map(r => r.count);
@@ -287,8 +410,8 @@
         datasets: [{
           label: 'Новые пользователи',
           data: values,
-          backgroundColor: 'rgba(250, 71, 31, 0.7)',
-          borderColor: 'rgba(250, 71, 31, 1)',
+          backgroundColor: 'rgba(250,71,31,0.65)',
+          borderColor: 'rgba(250,71,31,1)',
           borderWidth: 1,
           borderRadius: 4,
         }]
@@ -303,44 +426,61 @@
             borderColor: 'rgba(255,255,255,0.1)',
             borderWidth: 1,
             titleColor: '#f0f0f0',
-            bodyColor: 'rgba(255,255,255,0.6)',
+            bodyColor: 'rgba(255,255,255,0.55)',
+            callbacks: {
+              title: items => labels[items[0].dataIndex],
+              label: item => ` ${item.raw} пользователей`,
+            }
           }
         },
         scales: {
           x: {
-            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } },
-            grid: { color: 'rgba(255,255,255,0.05)' }
+            ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 11 }, maxRotation: 45 },
+            grid:  { color: 'rgba(255,255,255,0.04)' }
           },
           y: {
             beginAtZero: true,
-            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 }, precision: 0 },
-            grid: { color: 'rgba(255,255,255,0.05)' }
+            ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 11 }, precision: 0 },
+            grid:  { color: 'rgba(255,255,255,0.06)' }
           }
         }
       }
     });
   }
 
-  // Переключение периода
-  document.querySelectorAll('.tab').forEach(btn => {
+  // Группировка (дни / недели / месяцы)
+  document.querySelectorAll('.gtab').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.gtab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
-      renderChart(btn.dataset.period);
+      currentGroup = btn.dataset.group;
+      renderChart();
     });
   });
 
-  // Авто-логин если секрет сохранён в сессии
+  // ── SHOW DASHBOARD ──────────────────────────────────────────────────────────
+  function showDashboard() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    renderCards();
+    renderChart();
+    document.getElementById('last-updated').textContent =
+      'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
+    startAutoRefresh();
+  }
+
+  // ── AUTO-LOGIN ──────────────────────────────────────────────────────────────
   (async function() {
     const saved = sessionStorage.getItem('admin_secret');
     if (!saved) return;
     try {
-      const res = await fetch(`${APP_URL}/api/admin/stats`, { headers: { 'x-backup-secret': saved } });
-      if (!res.ok) return;
+      const data = await loadStats(saved, null, null);
       secret = saved;
-      statsData = await res.json();
+      statsData = data;
+      applyPreset('30d');
+      statsData = await loadStats(secret, currentFrom, currentTo);
       showDashboard();
-    } catch (e) {}
+    } catch {}
   })();
 </script>
 </body>
