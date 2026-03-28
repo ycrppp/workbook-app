@@ -684,6 +684,64 @@
     }
     .proj-edit-btn:hover { color: var(--text); }
     .project-card:hover .proj-edit-btn { opacity: 1; }
+    .proj-menu-wrap { position: relative; flex-shrink: 0; margin-left: auto; }
+    .proj-menu-btn {
+      opacity: 0;
+      transition: opacity 0.15s;
+      cursor: pointer;
+      color: var(--text3);
+      padding: 2px 6px;
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      line-height: 1;
+      border-radius: 4px;
+      display: block;
+    }
+    .proj-menu-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .project-card:hover .proj-menu-btn { opacity: 1; }
+    .proj-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: #1e1e1e;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 200;
+      min-width: 130px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .proj-dropdown-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 5px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .proj-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+    .proj-dropdown-item.danger { color: #f87171; }
+    .proj-dropdown-item.danger:hover { background: rgba(248,113,113,0.1); }
+    .delete-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .delete-confirm-box {
+      background: #1a1a1a;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 24px;
+      max-width: 300px;
+      width: 90%;
+    }
+    .delete-confirm-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .delete-confirm-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; line-height: 1.5; }
+    .delete-confirm-btns { display: flex; gap: 8px; justify-content: flex-end; }
     .proj-meta { font-size: 12px; color: var(--text3); }
     .proj-done { color: #6abf6a; }
     .proj-rename-input {
@@ -745,6 +803,17 @@
     <div class="modal-box" onclick="event.stopPropagation()">
       <button class="modal-close" onclick="closeModal()">✕</button>
       <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <div class="delete-confirm-overlay" id="delete-confirm" style="display:none" onclick="closeDeleteConfirm()">
+    <div class="delete-confirm-box" onclick="event.stopPropagation()">
+      <div class="delete-confirm-title">Удалить воркбук?</div>
+      <div class="delete-confirm-sub" id="delete-confirm-sub"></div>
+      <div class="delete-confirm-btns">
+        <button class="btn" onclick="closeDeleteConfirm()">Отмена</button>
+        <button class="btn" id="delete-confirm-ok" style="background:#b91c1c;color:#fff;border-color:#b91c1c">Удалить</button>
+      </div>
     </div>
   </div>
 
@@ -1280,7 +1349,8 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDeleteConfirm(); closeProjectMenus(); } });
+document.addEventListener('click', () => closeProjectMenus());
 
 // ─── PROJECTS STORAGE ─────────────────────────────────────────────────────────
 const PROJECTS_KEY = 'workbook_projects_v1';
@@ -1434,10 +1504,54 @@ function renderProjects() {
             <path d="M8 3L10 5" stroke="currentColor" stroke-width="1.2"/>
           </svg>
         </span>
+        <span class="proj-menu-wrap">
+          <span class="proj-menu-btn" onclick="toggleProjectMenu(event,'${proj.id}')" title="Действия">···</span>
+          <div class="proj-dropdown" id="proj-menu-${proj.id}" style="display:none">
+            <div class="proj-dropdown-item danger" onclick="confirmDeleteProject(event,'${proj.id}','${safeEsc(proj.name)}')">Удалить</div>
+          </div>
+        </span>
       </div>
       <div class="proj-meta">${doneText} · ${date}</div>
     </div>`;
   }).join('');
+}
+
+function toggleProjectMenu(e, id) {
+  e.stopPropagation();
+  const menu = document.getElementById('proj-menu-' + id);
+  const isOpen = menu.style.display !== 'none';
+  closeProjectMenus();
+  if (!isOpen) menu.style.display = 'block';
+}
+
+function closeProjectMenus() {
+  document.querySelectorAll('.proj-dropdown').forEach(m => m.style.display = 'none');
+}
+
+function confirmDeleteProject(e, id, name) {
+  e.stopPropagation();
+  closeProjectMenus();
+  document.getElementById('delete-confirm-sub').textContent = '«' + name + '» — все упражнения и ответы будут удалены. Это действие нельзя отменить.';
+  document.getElementById('delete-confirm-ok').onclick = () => deleteProject(id);
+  document.getElementById('delete-confirm').style.display = 'flex';
+}
+
+function closeDeleteConfirm() {
+  document.getElementById('delete-confirm').style.display = 'none';
+}
+
+function deleteProject(id) {
+  closeDeleteConfirm();
+  projectsData.projects = projectsData.projects.filter(p => p.id !== id);
+  if (projectsData.currentProjectId === id) {
+    projectsData.currentProjectId = projectsData.projects.length ? projectsData.projects[projectsData.projects.length - 1].id : null;
+  }
+  saveProjects();
+  if (projectsData.projects.length === 0) {
+    createNewProject();
+  } else {
+    renderProjects();
+  }
 }
 
 function startRenameProject(e, id) {
