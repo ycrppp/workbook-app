@@ -582,7 +582,7 @@
       gap: 8px;
       z-index: 100;
       pointer-events: auto;
-      padding-bottom: 6px;
+      padding-bottom: 12px;
       cursor: pointer;
     }
     .user-avatar {
@@ -602,7 +602,7 @@
     .user-badge:hover .user-name { color: rgba(255,255,255,0.85); }
     .user-dropdown {
       position: absolute;
-      top: calc(100% + 2px);
+      top: 100%;
       right: 0;
       background: #1e1e1e;
       border: 1px solid rgba(255,255,255,0.1);
@@ -791,7 +791,7 @@
   <div id="app">
 
     <!-- ── USER BADGE ──────────────────────────────────────────────────── -->
-    <div class="user-badge" id="user-badge" style="display:none; position:relative">
+    <div class="user-badge" id="user-badge" style="display:none">
       <img class="user-avatar" id="user-avatar" src="" alt=""/>
       <span class="user-name" id="user-name"></span>
       <div class="user-dropdown">
