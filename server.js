@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { Pool } = require('pg');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ type: ['application/json', 'text/plain'] })); // text/plain for sendBeacon
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── DATABASE ─────────────────────────────────────────────────────────────────

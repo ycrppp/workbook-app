@@ -1149,29 +1149,48 @@ function loadProjects() {
 }
 
 let _syncTimer = null;
+
+function syncToDb() {
+  try {
+    const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
+    if (!tgUser) return Promise.resolve();
+    return fetch('/api/user/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegram_id: tgUser.id,
+        first_name: tgUser.first_name,
+        last_name: tgUser.last_name,
+        username: tgUser.username,
+        photo_url: tgUser.photo_url,
+        projects: projectsData,
+      }),
+    }).catch(() => {});
+  } catch(e) { return Promise.resolve(); }
+}
+
 function saveProjects() {
   try { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projectsData)); } catch(e) {}
-  // Дебounced sync to DB
   clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(() => {
-    try {
-      const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-      if (!tgUser) return;
-      fetch('/api/user/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegram_id: tgUser.id,
-          first_name: tgUser.first_name,
-          last_name: tgUser.last_name,
-          username: tgUser.username,
-          photo_url: tgUser.photo_url,
-          projects: projectsData,
-        }),
-      }).catch(() => {});
-    } catch(e) {}
-  }, 1500);
+  _syncTimer = setTimeout(syncToDb, 800);
 }
+
+// Sync on page unload as safety net
+window.addEventListener('beforeunload', () => {
+  clearTimeout(_syncTimer);
+  try {
+    const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
+    if (!tgUser) return;
+    navigator.sendBeacon('/api/user/sync', JSON.stringify({
+      telegram_id: tgUser.id,
+      first_name: tgUser.first_name,
+      last_name: tgUser.last_name,
+      username: tgUser.username,
+      photo_url: tgUser.photo_url,
+      projects: projectsData,
+    }));
+  } catch(e) {}
+});
 
 let projectsData = loadProjects();
 const _cur = projectsData.currentProjectId
@@ -1414,7 +1433,9 @@ function goToProjectsList() {
   goStep(0);
 }
 
-function logout() {
+async function logout() {
+  clearTimeout(_syncTimer);
+  await syncToDb();
   localStorage.removeItem('tg_user');
   localStorage.removeItem(PROJECTS_KEY);
   window.location.reload();
