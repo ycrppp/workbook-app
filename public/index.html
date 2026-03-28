@@ -1342,7 +1342,9 @@ function showUserBadge(user) {
 }
 
 async function onTelegramAuth(user) {
-  localStorage.setItem('tg_user', JSON.stringify(user));
+  // Не сохраняем hash — он нужен только для одноразовой верификации
+  const { hash: _hash, ...safeUser } = user;
+  localStorage.setItem('tg_user', JSON.stringify(safeUser));
   document.getElementById('tg-login-wrap').style.display = 'none';
   document.getElementById('tg-no-sub').style.display = 'none';
   document.getElementById('tg-checking').style.display = 'block';
@@ -1538,8 +1540,10 @@ async function openModule(moduleId, regenCorrection) {
   hideRegenForm();
 
   // Используем кэш если есть и пересоздание не запрошено
-  if (!regenCorrection && state.exerciseCache[moduleId]) {
-    renderModule(state.exerciseCache[moduleId]);
+  const cached = state.exerciseCache[moduleId];
+  const cacheValid = cached && cached.ex1?.instruction && cached.ex2?.instruction && cached.ex3?.instruction;
+  if (!regenCorrection && cacheValid) {
+    renderModule(cached);
     goStep(5);
     return;
   }
