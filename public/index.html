@@ -785,20 +785,20 @@
     </div>
   </div>
 
+  <!-- ── USER BADGE (outside #app to ensure fixed positioning works) ──── -->
+  <div class="user-badge" id="user-badge" style="display:none">
+    <img class="user-avatar" id="user-avatar" src="" alt=""/>
+    <span class="user-name" id="user-name"></span>
+    <div class="user-dropdown">
+      <div class="user-dropdown-item" onclick="goToProjectsList()">Мои воркбуки</div>
+      <div class="user-dropdown-item danger" onclick="logout()">Выйти</div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════
        WORKBOOK APP
   ══════════════════════════════════════════ -->
   <div id="app">
-
-    <!-- ── USER BADGE ──────────────────────────────────────────────────── -->
-    <div class="user-badge" id="user-badge" style="display:none">
-      <img class="user-avatar" id="user-avatar" src="" alt=""/>
-      <span class="user-name" id="user-name"></span>
-      <div class="user-dropdown">
-        <div class="user-dropdown-item" onclick="goToProjectsList()">Мои воркбуки</div>
-        <div class="user-dropdown-item danger" onclick="logout()">Выйти</div>
-      </div>
-    </div>
 
     <div class="progress-wrap">
       <div class="progress-bar">
