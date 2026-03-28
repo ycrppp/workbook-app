@@ -17,7 +17,12 @@ jobs:
           BACKUP_SECRET: ${{ secrets.BACKUP_SECRET }}
         run: |
           FILENAME="backup_$(date +%Y%m%d_%H%M%S).json"
-          curl -f -s -H "x-backup-secret: $BACKUP_SECRET" "$APP_URL/api/admin/backup" -o "$FILENAME"
+          HTTP_STATUS=$(curl -s -o "$FILENAME" -w "%{http_code}" -H "x-backup-secret: $BACKUP_SECRET" "$APP_URL/api/admin/backup")
+          echo "HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Response body: $(cat $FILENAME)"
+            exit 1
+          fi
           echo "Users backed up: $(python3 -c "import json; print(len(json.load(open('$FILENAME'))))")"
           echo "Size: $(du -sh $FILENAME | cut -f1)"
 
