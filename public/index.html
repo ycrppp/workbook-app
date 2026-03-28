@@ -593,13 +593,12 @@
     }
 
     #welcome-page .app-logo { pointer-events: none; user-select: none; }
-    .app-header { display: none; }
-    body.in-app .app-header { display: flex; }
     #app { display: none; }
     body.in-app #app { display: block; }
 
     /* HEADER BAR */
     .app-header {
+      display: none;
       position: fixed;
       top: 0;
       left: 50%;
@@ -607,15 +606,15 @@
       width: 100%;
       max-width: 680px;
       z-index: 100;
-      display: flex;
       background: linear-gradient(to bottom, rgba(20,20,20,0.95) 60%, transparent);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       align-items: center;
       justify-content: space-between;
-      padding: 14px 1.25rem 0;
+      padding: 14px 1.25rem 14px;
       pointer-events: none;
     }
+    body.in-app .app-header { display: flex; }
 
     /* LOGO (top-left) */
     .app-logo {
