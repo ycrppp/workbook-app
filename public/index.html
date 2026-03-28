@@ -590,30 +590,38 @@
       margin-bottom: 0.6rem;
     }
 
+    /* HEADER BAR */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 14px 1.25rem 0;
+      pointer-events: none;
+    }
+
     /* LOGO (top-left) */
     .app-logo {
-      position: fixed;
-      top: 14px;
-      left: 32px;
-      z-index: 100;
       font-family: 'TTBiersal', serif;
       font-style: italic;
       font-size: 32px;
       color: var(--text);
       letter-spacing: 0.01em;
-      pointer-events: none;
       user-select: none;
     }
 
     /* USER BADGE (top-right) */
     .user-badge {
-      position: fixed;
-      top: 20px;
-      right: 32px;
+      position: relative;
       display: flex;
       align-items: center;
       gap: 8px;
-      z-index: 100;
       pointer-events: auto;
       padding-bottom: 12px;
       cursor: pointer;
@@ -903,15 +911,15 @@
     </div>
   </div>
 
-  <div class="app-logo">Workbook</div>
-
-  <!-- ── USER BADGE (outside #app to ensure fixed positioning works) ──── -->
-  <div class="user-badge" id="user-badge" style="display:none">
-    <img class="user-avatar" id="user-avatar" src="" alt=""/>
-    <span class="user-name" id="user-name"></span>
-    <div class="user-dropdown">
-      <div class="user-dropdown-item" onclick="goToProjectsList()">Мои воркбуки</div>
-      <div class="user-dropdown-item danger" onclick="logout()">Выйти</div>
+  <div class="app-header">
+    <div class="app-logo">Workbook</div>
+    <div class="user-badge" id="user-badge" style="display:none">
+      <img class="user-avatar" id="user-avatar" src="" alt=""/>
+      <span class="user-name" id="user-name"></span>
+      <div class="user-dropdown">
+        <div class="user-dropdown-item" onclick="goToProjectsList()">Мои воркбуки</div>
+        <div class="user-dropdown-item danger" onclick="logout()">Выйти</div>
+      </div>
     </div>
   </div>
 
