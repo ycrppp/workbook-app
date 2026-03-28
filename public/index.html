@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Воркбук — Искусство действия</title>
   <style>
+    @font-face {
+      font-family: 'TTBiersal';
+      src: url('/fonts/TT_Biersal_Trial_Italic.woff2') format('woff2'),
+           url('/fonts/TT_Biersal_Trial_Italic.woff') format('woff');
+      font-weight: normal;
+      font-style: italic;
+      font-display: swap;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -582,6 +590,21 @@
       margin-bottom: 0.6rem;
     }
 
+    /* LOGO (top-left) */
+    .app-logo {
+      position: fixed;
+      top: 18px;
+      left: 32px;
+      z-index: 100;
+      font-family: 'TTBiersal', serif;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      user-select: none;
+    }
+
     /* USER BADGE (top-right) */
     .user-badge {
       position: fixed;
@@ -879,6 +902,8 @@
       <span onclick="openModal('nda')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2);">Соглашение о конфиденциальности данных</span>
     </div>
   </div>
+
+  <div class="app-logo">Workbook</div>
 
   <!-- ── USER BADGE (outside #app to ensure fixed positioning works) ──── -->
   <div class="user-badge" id="user-badge" style="display:none">
