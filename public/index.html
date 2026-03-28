@@ -595,6 +595,8 @@
     #welcome-page .app-logo { pointer-events: none; user-select: none; }
     .app-header { display: none; }
     body.in-app .app-header { display: flex; }
+    #app { display: none; }
+    body.in-app #app { display: block; }
 
     /* HEADER BAR */
     .app-header {
@@ -837,6 +839,7 @@
     try {
       if (localStorage.getItem('tg_user')) {
         document.write('<style>#welcome-page{display:none!important}</style>');
+        document.write('<script>document.addEventListener("DOMContentLoaded",function(){document.body.classList.add("in-app");})<\/script>');
       }
     } catch(e) {}
   </script>
@@ -918,7 +921,7 @@
         </div>
       </div>
     </div>
-    <div style="margin-top:2rem; font-size:12px; color:rgba(255,255,255,0.25); text-align:center; letter-spacing:0.02em; line-height:2; max-width:440px;">
+    <div style="margin-top:2rem; font-size:12px; color:rgba(255,255,255,0.25); text-align:center; letter-spacing:0.02em; line-height:1.6; max-width:440px;">
       Авторизуясь, вы принимаете условия
       <span onclick="openModal('oferta')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2);">публичной оферты</span>
       и соглашаетесь на обработку персональных данных согласно
@@ -943,7 +946,7 @@
   <!-- ══════════════════════════════════════════
        WORKBOOK APP
   ══════════════════════════════════════════ -->
-  <div id="app" style="display:none">
+  <div id="app">
 
     <div class="progress-wrap">
       <div class="progress-bar">
@@ -1760,7 +1763,6 @@ function openWorkbook() {
   const wp = document.getElementById('welcome-page');
   const app = document.getElementById('app');
   wp.classList.add('hiding');
-  app.style.display = '';
   document.body.classList.add('in-app');
   setTimeout(() => {
     wp.style.display = 'none';
