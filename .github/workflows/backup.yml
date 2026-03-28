@@ -8,27 +8,62 @@ on:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    container: postgres:18
     timeout-minutes: 15
 
     steps:
-      - name: Create dump
+      - name: Install psycopg2
+        run: pip install psycopg2-binary
+
+      - name: Create backup
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          PGSSLMODE: require
         run: |
-          FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
-          pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "$FILENAME"
-          echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
+          FILENAME="backup_$(date +%Y%m%d_%H%M%S).json"
+          python3 - <<'EOF'
+import psycopg2, json, os, sys
+from datetime import datetime, date
+
+def serialize(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError(f"Cannot serialize {type(obj)}")
+
+conn = psycopg2.connect(os.environ['DATABASE_URL'], sslmode='require')
+cur = conn.cursor()
+cur.execute('SELECT telegram_id, first_name, last_name, username, projects, created_at, updated_at FROM users')
+cols = [d[0] for d in cur.description]
+rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+print(json.dumps(rows, default=serialize, ensure_ascii=False, indent=2))
+conn.close()
+EOF
+          python3 - <<'EOF' > "$FILENAME"
+import psycopg2, json, os
+from datetime import datetime, date
+
+def serialize(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError
+
+conn = psycopg2.connect(os.environ['DATABASE_URL'], sslmode='require')
+cur = conn.cursor()
+cur.execute('SELECT telegram_id, first_name, last_name, username, projects, created_at, updated_at FROM users')
+cols = [d[0] for d in cur.description]
+rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+print(json.dumps(rows, default=serialize, ensure_ascii=False, indent=2))
+conn.close()
+EOF
+          echo "Backed up $(python3 -c "import json; d=json.load(open('$FILENAME')); print(len(d))") users"
           echo "Size: $(du -sh $FILENAME | cut -f1)"
+          echo "BACKUP_FILE=$FILENAME" >> $GITHUB_ENV
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: db-backup-${{ github.run_id }}-${{ github.run_attempt }}
-          path: '*.dump'
+          name: db-backup-${{ github.run_id }}
+          path: '*.json'
           retention-days: 90
 
       - name: Notify on failure
         if: failure()
-        run: echo "::error::Database backup failed! Check DATABASE_URL secret and DB connectivity."
+        run: echo "::error::Database backup failed! Check DATABASE_URL secret."
