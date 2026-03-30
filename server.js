@@ -596,6 +596,74 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
+// ─── MODULE FEEDBACK ──────────────────────────────────────────────────────────
+app.post('/api/feedback', async (req, res) => {
+  const { context, moduleId, answers } = req.body;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+
+  const MODULE_TITLES = { gaps: 'Три разрыва', intent: 'Направленный оппортунизм', cascade: 'Каскад целей', independence: 'Независимое мышление' };
+
+  const answersText = [
+    answers?.ex1 ? `Диагностика: ${answers.ex1.trim()}` : null,
+    answers?.ex2 ? `Инструмент: ${answers.ex2.trim()}` : null,
+    answers?.ex3 ? `Следующий шаг: ${answers.ex3.trim()}` : null,
+  ].filter(Boolean).join('\n\n');
+
+  const systemPrompt = `Ты — куратор воркбука по книге «Искусство действия» Стивена Бангея. Пользователь только что завершил модуль и ты даёшь короткую обратную связь по его ответам.
+
+ФОРМАТ — строго 2-3 предложения:
+1. Отразить что конкретно он сделал — его словами, не своими. Не пересказывай упражнения — говори о содержании ответов.
+2. Если ответ поверхностный или слишком общий — мягко обозначь это: "Следующий шаг пока звучит широко — попробуй сузить до одного конкретного действия на этой неделе". Если ответы конкретные — не комментируй это отдельно.
+3. Одно предложение-мостик к следующему модулю — что он теперь сможет увидеть иначе. Без спойлеров.
+
+ЗАПРЕТЫ:
+- Никаких оценок ("хорошо", "отлично", "молодец", "глубокий анализ")
+- Никаких общих фраз ("это важный шаг", "ты на верном пути")
+- Не повторяй структуру упражнений
+- Максимум 3 предложения
+
+Пиши на «ты». Живым языком. Коротко.`;
+
+  const userMsg = `Модуль: ${MODULE_TITLES[moduleId] || moduleId}
+
+Контекст пользователя:
+Роль: ${context?.role || 'не указана'}
+Бизнес: ${context?.biz || 'не описан'}
+Боль: ${context?.pain || 'не описана'}
+
+Его ответы:
+${answersText || 'Ответы не заполнены'}`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+    const data = await response.json();
+    const text = data.content?.[0]?.text?.trim() || '';
+    res.json({ success: true, feedback: text });
+  } catch (err) {
+    console.error('[feedback] error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── FINAL SYNTHESIS ──────────────────────────────────────────────────────────
 app.post('/api/final', async (req, res) => {
   const { context, answers } = req.body;
