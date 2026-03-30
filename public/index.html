@@ -939,7 +939,7 @@
   <script>
     // Скрываем welcome-страницу до рендера если пользователь уже залогинен
     try {
-      if (localStorage.getItem('tg_user')) {
+      if (localStorage.getItem('tg_user') && localStorage.getItem('auth_token')) {
         document.write('<style>#welcome-page{display:none!important}</style>');
       }
     } catch(e) {}
@@ -1598,12 +1598,12 @@ let _syncTimer = null;
 async function syncToDb(retries = 2) {
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (!tgUser) return;
+    const token  = localStorage.getItem('auth_token');
+    if (!tgUser || !token) return;
     const resp = await fetch('/api/user/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({
-        telegram_id: tgUser.id,
         first_name: tgUser.first_name,
         last_name: tgUser.last_name,
         username: tgUser.username,
@@ -1635,9 +1635,11 @@ window.addEventListener('beforeunload', () => {
   clearTimeout(_syncTimer);
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (!tgUser) return; // logout already handled sync before removing tg_user
+    const token  = localStorage.getItem('auth_token');
+    if (!tgUser || !token) return;
+    // sendBeacon не поддерживает заголовки — передаём токен в теле
     navigator.sendBeacon('/api/user/sync', JSON.stringify({
-      telegram_id: tgUser.id,
+      auth_token: token,
       first_name: tgUser.first_name,
       last_name: tgUser.last_name,
       username: tgUser.username,
@@ -1843,7 +1845,6 @@ function showUserBadge(user) {
 }
 
 async function onTelegramAuth(user) {
-  // Не сохраняем hash — он нужен только для одноразовой верификации
   const { hash: _hash, ...safeUser } = user;
   localStorage.setItem('tg_user', JSON.stringify(safeUser));
   document.getElementById('tg-login-wrap').style.display = 'none';
@@ -1851,7 +1852,8 @@ async function onTelegramAuth(user) {
   document.getElementById('tg-checking').style.display = 'block';
 
   try {
-    const resp = await fetch('/api/check-subscription', {
+    // /api/auth: проверяет подпись Telegram + подписку + выдаёт токен
+    const resp = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ telegramUser: user }),
@@ -1861,13 +1863,15 @@ async function onTelegramAuth(user) {
     document.getElementById('tg-checking').style.display = 'none';
 
     if (data.subscribed) {
+      // Сохраняем токен — он используется для всех последующих запросов
+      localStorage.setItem('auth_token', data.token);
       showUserBadge(user);
       // Загружаем данные пользователя из БД
       try {
         const dbResp = await fetch('/api/user/load', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegram_id: user.id }),
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.token}` },
+          body: JSON.stringify({}),
         });
         const dbData = await dbResp.json();
         if (dbData.projects) {
@@ -1973,6 +1977,7 @@ async function logout() {
     try { await fetch('/api/user/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }); } catch(e) {}
   }
   localStorage.removeItem('tg_user');
+  localStorage.removeItem('auth_token');
   // Keep PROJECTS_KEY as backup — will be merged on next login if DB sync failed
   window.location.reload();
 }
@@ -2446,7 +2451,13 @@ async function regenWithCorrection() {
 (function() {
   try {
     const tgUser = JSON.parse(localStorage.getItem('tg_user') || 'null');
-    if (!tgUser) return;
+    const token  = localStorage.getItem('auth_token');
+    // Если нет токена или пользователя — требуем повторный вход
+    if (!tgUser || !token) {
+      localStorage.removeItem('tg_user');
+      localStorage.removeItem('auth_token');
+      return;
+    }
 
     showUserBadge(tgUser);
     enterApp(false);
@@ -2454,9 +2465,18 @@ async function regenWithCorrection() {
     // Грузим свежие данные из БД (фоново, не блокируя UI)
     fetch('/api/user/load', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegram_id: tgUser.id }),
-    }).then(r => r.json()).then(dbData => {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({}),
+    }).then(r => {
+      if (r.status === 401) {
+        // Токен истёк или недействителен — выйти
+        localStorage.removeItem('tg_user');
+        localStorage.removeItem('auth_token');
+        window.location.reload();
+        return Promise.reject('token expired');
+      }
+      return r.json();
+    }).then(dbData => {
       if (dbData.projects) {
         const localTs = projectsData.updatedAt || 0;
         const dbTs = dbData.projects.updatedAt || 0;

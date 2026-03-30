@@ -127,6 +127,58 @@ const BOOKS = {
   },
 };
 
+// ─── AUTH TOKENS ──────────────────────────────────────────────────────────────
+const TOKEN_TTL = 30 * 24 * 60 * 60 * 1000; // 30 дней
+
+function signToken(telegram_id) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET not set');
+  const payload = Buffer.from(JSON.stringify({ tid: telegram_id, iat: Date.now() })).toString('base64url');
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function verifyToken(token) {
+  const secret = process.env.JWT_SECRET;
+  if (!token || !secret) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const [payload, sig] = parts;
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  const eBuf = Buffer.from(expected);
+  const sBuf = Buffer.from(sig);
+  if (eBuf.length !== sBuf.length) return null;
+  if (!crypto.timingSafeEqual(eBuf, sBuf)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    if (Date.now() - data.iat > TOKEN_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+
+function requireAuth(req, res, next) {
+  const header = req.headers['authorization'];
+  let token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token && req.body?.auth_token) token = req.body.auth_token; // sendBeacon fallback
+  const data = verifyToken(token);
+  if (!data) return res.status(401).json({ error: 'Unauthorized' });
+  req.telegram_id = data.tid;
+  next();
+}
+
+// ─── DEV AUTH (только при DEV_MODE=true) ─────────────────────────────────────
+if (process.env.DEV_MODE === 'true') {
+  app.post('/api/dev-auth', (req, res) => {
+    try {
+      const token = signToken(req.body?.telegram_id || 1);
+      res.json({ token });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+  console.log('[dev] /api/dev-auth enabled');
+}
+
 // ─── API KEY (для вызова с клиента) ───────────────────────────────────────────
 app.get('/api/config', (req, res) => {
   res.json({ apiKey: process.env.ANTHROPIC_API_KEY || '' });
@@ -350,11 +402,53 @@ app.post('/api/check-subscription', async (req, res) => {
   }
 });
 
+// ─── AUTH (верификация Telegram + подписка + выдача токена) ───────────────────
+app.post('/api/auth', async (req, res) => {
+  const { telegramUser } = req.body;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const channel  = process.env.TELEGRAM_CHANNEL;
+
+  if (!botToken || !channel) return res.status(500).json({ error: 'Telegram not configured' });
+  if (!process.env.JWT_SECRET) return res.status(500).json({ error: 'JWT_SECRET not configured' });
+
+  // Верификация подписи от Telegram
+  const { hash, ...fields } = telegramUser;
+  const secretKey = crypto.createHash('sha256').update(botToken).digest();
+  const dataCheckString = Object.keys(fields).sort().map(k => `${k}=${fields[k]}`).join('\n');
+  const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  if (expectedHash !== hash) {
+    console.log(`[auth] hash mismatch`);
+    return res.status(403).json({ error: 'Invalid Telegram auth data' });
+  }
+  if (Date.now() / 1000 - fields.auth_date > 86400) {
+    return res.status(403).json({ error: 'Auth data expired' });
+  }
+
+  try {
+    // Проверяем подписку на канал
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/getChatMember?chat_id=${encodeURIComponent(channel)}&user_id=${telegramUser.id}`
+    );
+    const data = await response.json();
+    const status = data.result?.status;
+    console.log(`[auth] user_id=${telegramUser.id} status=${status}`);
+    const subscribed = ['creator', 'administrator', 'member', 'restricted'].includes(status);
+
+    if (!subscribed) return res.json({ subscribed: false });
+
+    // Выдаём подписанный токен
+    const token = signToken(telegramUser.id);
+    res.json({ subscribed: true, token });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── USER LOAD (после auth — грузим данные из БД) ─────────────────────────────
-app.post('/api/user/load', async (req, res) => {
+app.post('/api/user/load', requireAuth, async (req, res) => {
   if (!pool) return res.json({ projects: { projects: [], currentProjectId: null } });
-  const { telegram_id } = req.body;
-  if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
+  const telegram_id = req.telegram_id; // берём из токена, не из тела
   try {
     const result = await pool.query(
       `UPDATE users SET login_count = login_count + 1 WHERE telegram_id = $1
@@ -373,10 +467,10 @@ app.post('/api/user/load', async (req, res) => {
 });
 
 // ─── USER SYNC (сохраняем воркбуки в БД) ─────────────────────────────────────
-app.post('/api/user/sync', async (req, res) => {
+app.post('/api/user/sync', requireAuth, async (req, res) => {
   if (!pool) return res.json({ success: true });
-  const { telegram_id, first_name, last_name, username, photo_url, projects } = req.body;
-  if (!telegram_id) return res.status(400).json({ error: 'telegram_id required' });
+  const telegram_id = req.telegram_id; // берём из токена, не из тела
+  const { first_name, last_name, username, photo_url, projects } = req.body;
   try {
     await pool.query(`
       INSERT INTO users (telegram_id, first_name, last_name, username, photo_url, projects, updated_at)
