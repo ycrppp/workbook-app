@@ -1691,7 +1691,7 @@ function saveState() {
     role: state.role, size: state.size, biz: state.biz, pain: state.pain,
     correction: state.correction, sessionId: state.sessionId,
     completedModules: state.completedModules,
-    answers: state.answers, exerciseCache: state.exerciseCache,
+    answers: state.answers, exerciseCache: state.exerciseCache, feedbackCache: state.feedbackCache,
   };
   if (projectsData.currentProjectId) {
     const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
@@ -1716,6 +1716,7 @@ const state = {
   completedModules: _cur?.completedModules || [],
   answers: _cur?.answers || {},
   exerciseCache: _cur?.exerciseCache || {},
+  feedbackCache: _cur?.feedbackCache || {},
   finalPlan: _cur?.finalPlan || '',
   finalCache: _cur?.finalCache || null,
 };
@@ -1822,6 +1823,7 @@ function selectProject(id) {
   state.completedModules = proj.completedModules || [];
   state.answers = proj.answers || {};
   state.exerciseCache = proj.exerciseCache || {};
+  state.feedbackCache = proj.feedbackCache || {};
   updateProjectLabel();
   buildCtxTags('ctx-tags');
   buildCtxTags('mod-ctx-tags');
@@ -1835,14 +1837,14 @@ function createNewProject() {
     id, name: 'Новый воркбук', createdAt: new Date().toISOString(),
     role: '', size: '', biz: '', pain: '', correction: '',
     sessionId: 'session_' + Math.random().toString(36).slice(2),
-    completedModules: [], answers: {}, exerciseCache: {},
+    completedModules: [], answers: {}, exerciseCache: {}, feedbackCache: {},
   };
   projectsData.projects.push(proj);
   projectsData.currentProjectId = id;
   saveProjects();
   state.role = ''; state.size = ''; state.biz = ''; state.pain = '';
   state.correction = ''; state.completedModules = []; state.answers = {};
-  state.exerciseCache = {}; state.sessionId = proj.sessionId;
+  state.exerciseCache = {}; state.feedbackCache = {}; state.sessionId = proj.sessionId;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('biz').value = '';
   document.getElementById('pain').value = '';
@@ -2222,6 +2224,12 @@ function renderModule(data) {
   });
 
   checkAllAnswered();
+
+  // Если для этого модуля уже есть сохранённый фидбек — показываем
+  const savedFeedback = state.feedbackCache[state.currentModule];
+  if (savedFeedback) {
+    showFeedbackBlock(savedFeedback, null, document.getElementById('feedback-block'));
+  }
 }
 
 // ─── SAVE ANSWER ──────────────────────────────────────────────────────────────
@@ -2255,6 +2263,23 @@ function checkAllAnswered() {
 }
 
 // ─── COMPLETE MODULE ──────────────────────────────────────────────────────────
+function showFeedbackBlock(feedbackText, nav, block) {
+  if (!nav) nav = document.querySelector('#s5 .nav');
+  if (!block) block = document.getElementById('feedback-block');
+  nav.innerHTML = `<button class="btn" onclick="goStep(3)">← К плану</button>`;
+  block.innerHTML = `
+    <div class="feedback-box">
+      <div class="feedback-label">Обратная связь</div>
+      <div>${feedbackText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="display:flex;gap:10px;margin-top:1.25rem;">
+        <button class="btn" style="flex:1" onclick="editAnswers()">← Изменить ответы</button>
+        <button class="btn primary" style="flex:1" onclick="completeModule()">Продолжить →</button>
+      </div>
+    </div>`;
+  block.style.display = 'block';
+  block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
 function restoreNav() {
   const nav = document.querySelector('#s5 .nav');
   if (nav) nav.innerHTML = `
@@ -2299,20 +2324,10 @@ async function requestFeedback() {
     const data = await resp.json();
 
     if (data.feedback) {
-      // Восстанавливаем nav с кнопкой назад
-      nav.innerHTML = `<button class="btn" onclick="goStep(3)">← К плану</button>`;
-      // Показываем фидбек с выбором
-      block.innerHTML = `
-        <div class="feedback-box">
-          <div class="feedback-label">Обратная связь</div>
-          <div>${data.feedback.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-          <div style="display:flex;gap:10px;margin-top:1.25rem;">
-            <button class="btn" style="flex:1" onclick="editAnswers()">← Изменить ответы</button>
-            <button class="btn primary" style="flex:1" onclick="completeModule()">Продолжить →</button>
-          </div>
-        </div>`;
-      block.style.display = 'block';
-      block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Сохраняем в кэш
+      state.feedbackCache[state.currentModule] = data.feedback;
+      saveState();
+      showFeedbackBlock(data.feedback, nav, block);
       return;
     }
   } catch (e) { /* fall through */ }
@@ -2616,6 +2631,7 @@ async function regenWithCorrection() {
         state.completedModules = cur.completedModules || [];
         state.answers = cur.answers || {};
         state.exerciseCache = cur.exerciseCache || {};
+        state.feedbackCache = cur.feedbackCache || {};
         buildCtxTags('ctx-tags'); buildCtxTags('mod-ctx-tags');
         updateModuleList(); updateProjectLabel();
       }
