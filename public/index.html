@@ -604,6 +604,69 @@
       font-size: 13px; color: var(--text2);
       line-height: 1.6;
     }
+    /* MINI-CHAT */
+    .chat-open-btn {
+      margin-top: 10px; background: none; border: none;
+      color: var(--text3); font-size: 12px; cursor: pointer;
+      padding: 2px 0; text-decoration: underline;
+      text-underline-offset: 3px; font-family: inherit;
+    }
+    .chat-open-btn:hover { color: var(--text2); }
+    .chat-panel {
+      margin-top: 12px; border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      animation: fadeInUp 0.25s ease;
+    }
+    .chat-messages {
+      max-height: 260px; overflow-y: auto;
+      padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .chat-msg {
+      max-width: 85%; padding: 8px 12px;
+      border-radius: 10px; font-size: 13px; line-height: 1.5;
+    }
+    .chat-msg-ai {
+      align-self: flex-start; background: var(--bg2);
+      color: var(--text2); border-bottom-left-radius: 3px;
+    }
+    .chat-msg-user {
+      align-self: flex-end; background: var(--accent);
+      color: #fff; border-bottom-right-radius: 3px;
+    }
+    .chat-msg-typing {
+      align-self: flex-start; background: var(--bg2);
+      color: var(--text3); font-size: 13px; padding: 8px 12px;
+      border-radius: 10px; border-bottom-left-radius: 3px;
+    }
+    .chat-input-row {
+      display: flex; gap: 8px; padding: 8px 12px;
+      border-top: 1px solid var(--border); background: var(--bg2);
+      align-items: flex-end;
+    }
+    .chat-input {
+      flex: 1; background: transparent; border: none;
+      color: var(--text); font-size: 13px; resize: none;
+      max-height: 80px; padding: 4px 0; line-height: 1.5;
+      font-family: inherit;
+    }
+    .chat-input:focus { outline: none; }
+    .chat-send-btn {
+      background: var(--accent); color: white; border: none;
+      border-radius: 50%; width: 30px; height: 30px; cursor: pointer;
+      font-size: 16px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; transition: opacity 0.2s;
+    }
+    .chat-send-btn:disabled { opacity: 0.35; cursor: default; }
+    .chat-footer {
+      padding: 6px 12px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end;
+    }
+    .chat-close-btn {
+      background: none; border: none; color: var(--text3);
+      font-size: 11px; cursor: pointer; padding: 2px 0;
+      text-decoration: underline; text-underline-offset: 3px;
+      font-family: inherit;
+    }
     /* STAR RATING */
     .star-rating { display: flex; gap: 6px; margin: 1rem 0 0.25rem; }
     .star-rating .star {
@@ -2211,6 +2274,11 @@ async function openModule(moduleId, regenCorrection) {
     const dlg = state.dialogCache[prevId];
     if (dlg) Object.entries(dlg).forEach(([exId, d]) => {
       if (d.reply && d.reply.trim()) dialogReplies[`${prevId}_${exId}`] = d.reply.trim();
+      // Собираем ответы пользователя из мини-чата
+      if (d.chat && d.chat.length > 0) {
+        const userMsgs = d.chat.filter(m => m.role === 'user').map(m => m.text).join(' / ');
+        if (userMsgs) dialogReplies[`${prevId}_${exId}_chat`] = userMsgs;
+      }
     });
   });
 
@@ -2276,6 +2344,9 @@ function renderModule(data) {
       dialogHtml = `<div class="dialog-wrap" id="dialog-${exId}" style="display:none"></div>`;
     }
 
+    const showChatBtn = savedVal.trim().length >= 30;
+    const hasChatHistory = cached?.chat && cached.chat.length > 0;
+
     const block = document.createElement('div');
     block.className = 'ex-block';
     block.dataset.instruction = ex.instruction;
@@ -2288,9 +2359,28 @@ function renderModule(data) {
           oninput="checkAllAnswered()">${savedVal}</textarea>
         <div class="ex-saved" id="saved-${exId}">✓ Сохранено</div>
         ${dialogHtml}
+        <button class="chat-open-btn" id="chat-btn-${exId}" onclick="openDialogChat('${exId}')"
+          style="display:${showChatBtn ? 'inline-block' : 'none'}">Разобрать подробнее →</button>
+        <div class="chat-panel" id="chat-panel-${exId}" style="display:none">
+          <div class="chat-messages" id="chat-msgs-${exId}"></div>
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chat-input-${exId}" rows="1" placeholder="Напишите..."
+              oninput="autoresizeChatInput(this)"
+              onkeydown="chatInputKeydown(event,'${exId}')"></textarea>
+            <button class="chat-send-btn" id="chat-send-${exId}" onclick="sendChatMessage('${exId}')">↑</button>
+          </div>
+          <div class="chat-footer">
+            <button class="chat-close-btn" onclick="closeDialogChat('${exId}')">Свернуть чат</button>
+          </div>
+        </div>
       </div>
     `;
     container.appendChild(block);
+
+    // Если есть история — восстанавливаем сообщения (панель остаётся закрытой)
+    if (hasChatHistory) {
+      renderChatMessages(exId, cached.chat);
+    }
   });
 
   checkAllAnswered();
@@ -2312,8 +2402,12 @@ async function saveAnswer(exId, value) {
   const savedEl = document.getElementById('saved-' + exId);
   if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
 
-  // Trigger dialog question if answer is substantial and not yet asked
   if (value.trim().length >= 30) {
+    // Show "discuss" button
+    const chatBtn = document.getElementById('chat-btn-' + exId);
+    if (chatBtn) chatBtn.style.display = 'inline-block';
+
+    // Trigger hint question (variant B) if not yet shown
     const cached = (state.dialogCache[state.currentModule] || {})[exId];
     if (!cached) triggerDialog(exId, value.trim());
   }
@@ -2389,6 +2483,150 @@ function saveDialogReply(exId, value) {
   saveState();
   const savedEl = document.getElementById('dreply-saved-' + exId);
   if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
+}
+
+// ─── MINI-CHAT ────────────────────────────────────────────────────────────────
+function chatMarkdown(text) {
+  return text
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
+function renderChatMessages(exId, messages) {
+  const container = document.getElementById('chat-msgs-' + exId);
+  if (!container) return;
+  container.innerHTML = messages.map(m => `
+    <div class="chat-msg ${m.role === 'user' ? 'chat-msg-user' : 'chat-msg-ai'}">
+      ${chatMarkdown(m.text)}
+    </div>`).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function openDialogChat(exId) {
+  const btn = document.getElementById('chat-btn-' + exId);
+  const panel = document.getElementById('chat-panel-' + exId);
+  if (!panel) return;
+  if (btn) btn.style.display = 'none';
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Если уже есть история — просто показываем
+  const cached = (state.dialogCache[state.currentModule] || {})[exId];
+  if (cached?.chat?.length > 0) {
+    renderChatMessages(exId, cached.chat);
+    return;
+  }
+
+  // Иначе — AI начинает разговор
+  const textarea = document.getElementById('ans-' + exId);
+  const exBlock = textarea?.closest('.ex-block');
+  const instruction = exBlock?.dataset?.instruction || '';
+  const userAnswer = textarea?.value || '';
+  const sendBtn = document.getElementById('chat-send-' + exId);
+  const msgs = document.getElementById('chat-msgs-' + exId);
+
+  if (sendBtn) sendBtn.disabled = true;
+  msgs.innerHTML = `<div class="chat-msg-typing"><span class="spinner"></span></div>`;
+
+  const token = localStorage.getItem('auth_token');
+  try {
+    const resp = await fetch('/api/dialog-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+      body: JSON.stringify({
+        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
+        moduleId: state.currentModule, exId, instruction, userAnswer, messages: [],
+      }),
+    });
+    const data = await resp.json();
+    if (!data.reply) { msgs.innerHTML = ''; if (sendBtn) sendBtn.disabled = false; return; }
+
+    const chatHistory = [{ role: 'assistant', text: data.reply }];
+    if (!state.dialogCache[state.currentModule]) state.dialogCache[state.currentModule] = {};
+    if (!state.dialogCache[state.currentModule][exId]) state.dialogCache[state.currentModule][exId] = {};
+    state.dialogCache[state.currentModule][exId].chat = chatHistory;
+    saveState();
+    renderChatMessages(exId, chatHistory);
+  } catch (e) {
+    msgs.innerHTML = '';
+  }
+  if (sendBtn) sendBtn.disabled = false;
+}
+
+async function sendChatMessage(exId) {
+  const input = document.getElementById('chat-input-' + exId);
+  const sendBtn = document.getElementById('chat-send-' + exId);
+  const msgs = document.getElementById('chat-msgs-' + exId);
+  if (!input || !input.value.trim()) return;
+
+  const userText = input.value.trim();
+  input.value = ''; input.style.height = '';
+
+  // Add user message to cache + UI
+  if (!state.dialogCache[state.currentModule]) state.dialogCache[state.currentModule] = {};
+  if (!state.dialogCache[state.currentModule][exId]) state.dialogCache[state.currentModule][exId] = {};
+  const chat = state.dialogCache[state.currentModule][exId].chat || [];
+  chat.push({ role: 'user', text: userText });
+  state.dialogCache[state.currentModule][exId].chat = chat;
+  saveState();
+  renderChatMessages(exId, chat);
+
+  // Typing indicator
+  const typingEl = document.createElement('div');
+  typingEl.className = 'chat-msg-typing';
+  typingEl.innerHTML = '<span class="spinner"></span>';
+  msgs.appendChild(typingEl);
+  msgs.scrollTop = msgs.scrollHeight;
+  if (sendBtn) sendBtn.disabled = true;
+
+  const textarea = document.getElementById('ans-' + exId);
+  const exBlock = textarea?.closest('.ex-block');
+  const instruction = exBlock?.dataset?.instruction || '';
+  const userAnswer = textarea?.value || '';
+  const token = localStorage.getItem('auth_token');
+
+  try {
+    const resp = await fetch('/api/dialog-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+      body: JSON.stringify({
+        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
+        moduleId: state.currentModule, exId, instruction, userAnswer,
+        messages: chat, // send full history including just-added user message
+      }),
+    });
+    const data = await resp.json();
+    typingEl.remove();
+    if (data.reply) {
+      chat.push({ role: 'assistant', text: data.reply });
+      state.dialogCache[state.currentModule][exId].chat = chat;
+      saveState();
+      renderChatMessages(exId, chat);
+    }
+  } catch (e) {
+    typingEl.remove();
+  }
+  if (sendBtn) sendBtn.disabled = false;
+}
+
+function closeDialogChat(exId) {
+  const panel = document.getElementById('chat-panel-' + exId);
+  const btn = document.getElementById('chat-btn-' + exId);
+  if (panel) panel.style.display = 'none';
+  if (btn) btn.style.display = 'inline-block';
+}
+
+function autoresizeChatInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+}
+
+function chatInputKeydown(e, exId) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChatMessage(exId);
+  }
 }
 
 // ─── COMPLETE MODULE ──────────────────────────────────────────────────────────

@@ -736,6 +736,67 @@ ${answer.trim()}`;
   }
 });
 
+// ─── DIALOG CHAT (multi-turn) ─────────────────────────────────────────────────
+app.post('/api/dialog-chat', async (req, res) => {
+  const { context, moduleId, exId, instruction, userAnswer, messages } = req.body;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+
+  const MODULE_TITLES = { gaps: 'Три разрыва', intent: 'Направленный оппортунизм', cascade: 'Каскад целей', independence: 'Независимое мышление' };
+  const EX_LABELS = { ex1: 'Диагностика', ex2: 'Инструмент', ex3: 'Следующий шаг' };
+
+  const systemPrompt = `Ты — куратор воркбука по книге «Искусство действия» Стивена Бангея. Ты ведёшь короткий диалог с пользователем, чтобы помочь ему глубже разобраться с конкретным упражнением.
+
+УПРАЖНЕНИЕ:
+Модуль: ${MODULE_TITLES[moduleId] || moduleId}
+Тип: ${EX_LABELS[exId] || exId}
+Задание: ${instruction || ''}
+
+Контекст пользователя:
+Роль: ${context?.role || 'не указана'}
+Бизнес: ${context?.biz || 'не описан'}
+Боль: ${context?.pain || 'не описана'}
+
+Его ответ на упражнение:
+${(userAnswer || '').trim()}
+
+ПРАВИЛА:
+- Ответ максимум 2-3 предложения. Коротко.
+- Задавай уточняющие вопросы или помогай конкретизировать — цель чтобы пользователь улучшил ответ.
+- СТРОГО в рамках этого упражнения. Если уходит в сторону — мягко верни.
+- Пиши на «ты». Живо, без официоза.`;
+
+  // Строим историю в формате Anthropic
+  const history = (messages || []).map(m => ({
+    role: m.role === 'user' ? 'user' : 'assistant',
+    content: m.text,
+  }));
+
+  // Если истории нет — AI сам начинает разговор (без вступления)
+  if (history.length === 0) {
+    history.push({ role: 'user', content: 'Начни диалог — сразу с вопроса, без вступления и без "Хорошо" или "Вот вопрос:".' });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 200, system: systemPrompt, messages: history }),
+    });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+    const data = await response.json();
+    const reply = data.content?.[0]?.text?.trim() || '';
+    res.json({ success: true, reply });
+  } catch (err) {
+    console.error('[dialog-chat] error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── FINAL SYNTHESIS ──────────────────────────────────────────────────────────
 app.post('/api/final', async (req, res) => {
   const { context, answers } = req.body;
