@@ -1270,7 +1270,7 @@
 
       <div class="nav">
         <button class="btn" onclick="goStep(3)">← К плану</button>
-        <button class="btn primary" id="next-mod-btn" onclick="requestFeedback()" disabled>Сохранить и продолжить →</button>
+        <button class="btn primary" id="next-mod-btn" onclick="requestFeedback()" disabled>Получить обратную связь →</button>
       </div>
     </div>
 
@@ -2134,11 +2134,10 @@ function buildCtxTags(containerId) {
 async function openModule(moduleId, regenCorrection) {
   state.currentModule = moduleId;
   hideRegenForm();
-  // Сбрасываем блок фидбека и кнопку
+  // Сбрасываем блок фидбека и nav
   const fb = document.getElementById('feedback-block');
   if (fb) { fb.style.display = 'none'; fb.innerHTML = ''; }
-  const nb = document.getElementById('next-mod-btn');
-  if (nb) { nb.textContent = 'Сохранить и продолжить →'; nb.style.display = ''; }
+  restoreNav();
 
   // Используем кэш если есть и пересоздание не запрошено
   const cached = state.exerciseCache[moduleId];
@@ -2256,33 +2255,36 @@ function checkAllAnswered() {
 }
 
 // ─── COMPLETE MODULE ──────────────────────────────────────────────────────────
+function restoreNav() {
+  const nav = document.querySelector('#s5 .nav');
+  if (nav) nav.innerHTML = `
+    <button class="btn" onclick="goStep(3)">← К плану</button>
+    <button class="btn primary" id="next-mod-btn" onclick="requestFeedback()" disabled>Получить обратную связь →</button>`;
+  checkAllAnswered();
+}
+
 function editAnswers() {
-  // Скрываем фидбек, возвращаем основную кнопку, скроллим к упражнениям
   const block = document.getElementById('feedback-block');
-  const btn   = document.getElementById('next-mod-btn');
   if (block) { block.style.display = 'none'; block.innerHTML = ''; }
-  if (btn)   { btn.style.display = ''; btn.textContent = 'Сохранить и продолжить →'; }
+  restoreNav();
   document.getElementById('exercises-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ─── MODULE FEEDBACK ──────────────────────────────────────────────────────────
 async function requestFeedback() {
-  const btn = document.getElementById('next-mod-btn');
+  const nav   = document.querySelector('#s5 .nav');
   const block = document.getElementById('feedback-block');
 
-  // Если фидбек уже показан — сразу завершаем модуль
-  if (block.style.display !== 'none' && block.innerHTML) {
-    completeModule();
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Анализирую ответы...';
   block.style.display = 'none';
   block.innerHTML = '';
 
+  // Показываем loading прямо в nav
+  nav.innerHTML = `<div style="width:100%;text-align:center;padding:4px 0;font-size:14px;color:var(--text3);">
+    <span class="spinner"></span> Анализирую ответы...
+  </div>`;
+
   const answers = state.answers[state.currentModule] || {};
-  const token = localStorage.getItem('auth_token');
+  const token   = localStorage.getItem('auth_token');
 
   try {
     const resp = await fetch('/api/feedback', {
@@ -2295,7 +2297,11 @@ async function requestFeedback() {
       }),
     });
     const data = await resp.json();
+
     if (data.feedback) {
+      // Восстанавливаем nav с кнопкой назад
+      nav.innerHTML = `<button class="btn" onclick="goStep(3)">← К плану</button>`;
+      // Показываем фидбек с выбором
       block.innerHTML = `
         <div class="feedback-box">
           <div class="feedback-label">Обратная связь</div>
@@ -2307,15 +2313,13 @@ async function requestFeedback() {
         </div>`;
       block.style.display = 'block';
       block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
     }
-  } catch (e) {
-    // Если запрос упал — не блокируем пользователя, просто завершаем модуль
-    completeModule();
-    return;
-  }
+  } catch (e) { /* fall through */ }
 
-  btn.disabled = false;
-  btn.style.display = 'none'; // прячем основную кнопку — она заменена кнопками внутри фидбека
+  // Если ошибка или нет фидбека — восстанавливаем nav и идём дальше
+  restoreNav();
+  completeModule();
 }
 
 function completeModule() {
