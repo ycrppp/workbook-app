@@ -706,13 +706,15 @@
       width: 100%;
       max-width: 680px;
       z-index: 100;
-      background: linear-gradient(to bottom, rgba(20,20,20,0.95) 60%, transparent);
+      background: rgba(20,20,20,0.92);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       align-items: center;
       justify-content: space-between;
-      padding: 14px 1.25rem 14px;
+      padding: 14px 1.25rem 40px;
       pointer-events: none;
+      -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
     }
     body.in-app .app-header { display: flex; }
 
