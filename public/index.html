@@ -583,6 +583,40 @@
       line-height: 1.65;
       white-space: pre-line;
     }
+    /* DIALOG */
+    .dialog-wrap {
+      margin-top: 12px;
+      border-left: 2px solid var(--border);
+      padding-left: 14px;
+      animation: fadeInUp 0.3s ease;
+    }
+    .dialog-loading {
+      font-size: 13px; color: var(--text3);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dialog-question {
+      font-size: 14px; color: var(--text2);
+      line-height: 1.6; margin-bottom: 10px;
+    }
+    .dialog-question::before {
+      content: '→ ';
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .dialog-reply {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-size: 13px; padding: 10px 12px;
+      resize: vertical; min-height: 60px; line-height: 1.5;
+      font-family: inherit;
+    }
+    .dialog-reply:focus { outline: none; border-color: var(--accent-mid); }
+    .dialog-reply-saved {
+      font-size: 11px; color: var(--success);
+      opacity: 0; transition: opacity 0.3s; margin-top: 4px;
+    }
+    .dialog-reply-saved.show { opacity: 1; }
     /* STAR RATING */
     .star-rating { display: flex; gap: 6px; margin: 1rem 0 0.25rem; }
     .star-rating .star {
@@ -1715,7 +1749,7 @@ function saveState() {
     role: state.role, size: state.size, biz: state.biz, pain: state.pain,
     correction: state.correction, sessionId: state.sessionId,
     completedModules: state.completedModules,
-    answers: state.answers, exerciseCache: state.exerciseCache, feedbackCache: state.feedbackCache, ratingCache: state.ratingCache,
+    answers: state.answers, exerciseCache: state.exerciseCache, feedbackCache: state.feedbackCache, ratingCache: state.ratingCache, dialogCache: state.dialogCache,
   };
   if (projectsData.currentProjectId) {
     const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
@@ -1742,6 +1776,7 @@ const state = {
   exerciseCache: _cur?.exerciseCache || {},
   feedbackCache: _cur?.feedbackCache || {},
   ratingCache: _cur?.ratingCache || {},
+  dialogCache: _cur?.dialogCache || {},
   finalPlan: _cur?.finalPlan || '',
   finalCache: _cur?.finalCache || null,
 };
@@ -1850,6 +1885,7 @@ function selectProject(id) {
   state.exerciseCache = proj.exerciseCache || {};
   state.feedbackCache = proj.feedbackCache || {};
   state.ratingCache = proj.ratingCache || {};
+  state.dialogCache = proj.dialogCache || {};
   updateProjectLabel();
   buildCtxTags('ctx-tags');
   buildCtxTags('mod-ctx-tags');
@@ -1863,14 +1899,14 @@ function createNewProject() {
     id, name: 'Новый воркбук', createdAt: new Date().toISOString(),
     role: '', size: '', biz: '', pain: '', correction: '',
     sessionId: 'session_' + Math.random().toString(36).slice(2),
-    completedModules: [], answers: {}, exerciseCache: {}, feedbackCache: {}, ratingCache: {},
+    completedModules: [], answers: {}, exerciseCache: {}, feedbackCache: {}, ratingCache: {}, dialogCache: {},
   };
   projectsData.projects.push(proj);
   projectsData.currentProjectId = id;
   saveProjects();
   state.role = ''; state.size = ''; state.biz = ''; state.pain = '';
   state.correction = ''; state.completedModules = []; state.answers = {};
-  state.exerciseCache = {}; state.feedbackCache = {}; state.ratingCache = {}; state.sessionId = proj.sessionId;
+  state.exerciseCache = {}; state.feedbackCache = {}; state.ratingCache = {}; state.dialogCache = {}; state.sessionId = proj.sessionId;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('biz').value = '';
   document.getElementById('pain').value = '';
@@ -2181,9 +2217,14 @@ async function openModule(moduleId, regenCorrection) {
   // Собираем ответы из всех модулей ДО текущего
   const moduleIndex = MODULE_ORDER.indexOf(moduleId);
   const previousAnswers = {};
+  const dialogReplies = {};
   MODULE_ORDER.slice(0, moduleIndex).forEach(prevId => {
     const ans = state.answers[prevId];
     if (ans) Object.entries(ans).forEach(([k, v]) => { previousAnswers[`${prevId}_${k}`] = v; });
+    const dlg = state.dialogCache[prevId];
+    if (dlg) Object.entries(dlg).forEach(([exId, d]) => {
+      if (d.reply && d.reply.trim()) dialogReplies[`${prevId}_${exId}`] = d.reply.trim();
+    });
   });
 
   try {
@@ -2195,6 +2236,7 @@ async function openModule(moduleId, regenCorrection) {
         moduleId,
         bookId: 'bangey',
         previousAnswers,
+        dialogReplies,
         correction: regenCorrection || state.correction || '',
       }),
     });
@@ -2233,9 +2275,27 @@ function renderModule(data) {
     if (!ex) return;
 
     const savedVal = state.answers[state.currentModule][exId] || '';
+    const cached = (state.dialogCache[state.currentModule] || {})[exId];
+
+    // Build dialog HTML from cache (if exists)
+    let dialogHtml = '';
+    if (cached && cached.question) {
+      const replyVal = cached.reply ? cached.reply.replace(/"/g, '&quot;') : '';
+      dialogHtml = `
+        <div class="dialog-wrap" id="dialog-${exId}">
+          <div class="dialog-question">${cached.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <textarea class="dialog-reply" rows="2" placeholder="Необязательно — но полезно..."
+            id="dreply-${exId}"
+            onblur="saveDialogReply('${exId}', this.value)">${replyVal}</textarea>
+          <div class="dialog-reply-saved" id="dreply-saved-${exId}">✓ Сохранено</div>
+        </div>`;
+    } else {
+      dialogHtml = `<div class="dialog-wrap" id="dialog-${exId}" style="display:none"></div>`;
+    }
 
     const block = document.createElement('div');
     block.className = 'ex-block';
+    block.dataset.instruction = ex.instruction;
     block.innerHTML = `
       <div class="ex-header">Упражнение ${i + 1} — ${ex.title}</div>
       <div class="ex-body">
@@ -2244,6 +2304,7 @@ function renderModule(data) {
           onblur="saveAnswer('${exId}', this.value)"
           oninput="checkAllAnswered()">${savedVal}</textarea>
         <div class="ex-saved" id="saved-${exId}">✓ Сохранено</div>
+        ${dialogHtml}
       </div>
     `;
     container.appendChild(block);
@@ -2268,6 +2329,12 @@ async function saveAnswer(exId, value) {
   const savedEl = document.getElementById('saved-' + exId);
   if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
 
+  // Trigger dialog question if answer is substantial and not yet asked
+  if (value.trim().length >= 30) {
+    const cached = (state.dialogCache[state.currentModule] || {})[exId];
+    if (!cached) triggerDialog(exId, value.trim());
+  }
+
   fetch('/api/answer', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2286,6 +2353,62 @@ function checkAllAnswered() {
     return el && el.value.trim().length > 10;
   });
   document.getElementById('next-mod-btn').disabled = !answers.every(Boolean);
+}
+
+// ─── DIALOG ───────────────────────────────────────────────────────────────────
+async function triggerDialog(exId, answerText) {
+  const wrap = document.getElementById('dialog-' + exId);
+  if (!wrap) return;
+
+  // Find instruction from the exercise block
+  const textarea = document.getElementById('ans-' + exId);
+  const exBlock = textarea?.closest('.ex-block');
+  const instruction = exBlock?.dataset?.instruction || '';
+
+  // Show loading
+  wrap.style.display = 'block';
+  wrap.innerHTML = `<div class="dialog-loading"><span class="spinner"></span> Думаю над вопросом...</div>`;
+
+  const token = localStorage.getItem('auth_token');
+  try {
+    const resp = await fetch('/api/dialog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+      body: JSON.stringify({
+        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
+        moduleId: state.currentModule,
+        exId,
+        instruction,
+        answer: answerText,
+      }),
+    });
+    const data = await resp.json();
+    if (!data.question) { wrap.style.display = 'none'; return; }
+
+    // Cache the question
+    if (!state.dialogCache[state.currentModule]) state.dialogCache[state.currentModule] = {};
+    state.dialogCache[state.currentModule][exId] = { question: data.question, reply: '' };
+    saveState();
+
+    // Render question + reply textarea
+    wrap.innerHTML = `
+      <div class="dialog-question">${data.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <textarea class="dialog-reply" rows="2" placeholder="Необязательно — но полезно..."
+        id="dreply-${exId}"
+        onblur="saveDialogReply('${exId}', this.value)"></textarea>
+      <div class="dialog-reply-saved" id="dreply-saved-${exId}">✓ Сохранено</div>`;
+  } catch (e) {
+    wrap.style.display = 'none';
+  }
+}
+
+function saveDialogReply(exId, value) {
+  if (!state.dialogCache[state.currentModule]) return;
+  if (!state.dialogCache[state.currentModule][exId]) return;
+  state.dialogCache[state.currentModule][exId].reply = value.trim();
+  saveState();
+  const savedEl = document.getElementById('dreply-saved-' + exId);
+  if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
 }
 
 // ─── COMPLETE MODULE ──────────────────────────────────────────────────────────
@@ -2694,6 +2817,7 @@ async function regenWithCorrection() {
         state.exerciseCache = cur.exerciseCache || {};
         state.feedbackCache = cur.feedbackCache || {};
         state.ratingCache = cur.ratingCache || {};
+        state.dialogCache = cur.dialogCache || {};
         buildCtxTags('ctx-tags'); buildCtxTags('mod-ctx-tags');
         updateModuleList(); updateProjectLabel();
       }

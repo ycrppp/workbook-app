@@ -186,7 +186,7 @@ app.get('/api/config', (req, res) => {
 
 // ─── GENERATE EXERCISES ───────────────────────────────────────────────────────
 app.post('/api/generate', async (req, res) => {
-  const { context, moduleId, bookId, previousAnswers, correction } = req.body;
+  const { context, moduleId, bookId, previousAnswers, dialogReplies, correction } = req.body;
 
   const book = BOOKS[bookId] || BOOKS.bangey;
   const module = book.modules.find(m => m.id === moduleId) || book.modules[0];
@@ -206,6 +206,16 @@ app.post('/api/generate', async (req, res) => {
         .map(([k, v]) => {
           const [modId, exId] = k.split('_');
           return `[${MODULE_TITLES[modId] || modId} / ${EX_LABELS[exId] || exId}]: ${v}`;
+        }).join('\n')
+    : '';
+
+  const dialogRepliesText = dialogReplies && Object.keys(dialogReplies).length > 0
+    ? `\nУточнения пользователя (ответы на уточняющие вопросы после упражнений):\n` +
+      Object.entries(dialogReplies)
+        .filter(([,v]) => v && v.trim())
+        .map(([k, v]) => {
+          const [modId, exId] = k.split('_');
+          return `[${MODULE_TITLES[modId] || modId} / ${EX_LABELS[exId] || exId} — уточнение]: ${v}`;
         }).join('\n')
     : '';
 
@@ -265,6 +275,7 @@ ${module.concept}
 - Используй термин из книги. Не обобщай.
 
 ${prevAnswersText ? 'Предыдущие ответы пользователя — учитывай их, углубляй:\n' + prevAnswersText : ''}
+${dialogRepliesText ? dialogRepliesText + '\n(Уточнения содержат дополнительный контекст — учитывай их при персонализации упражнений.)' : ''}
 
 Верни строго JSON без markdown, с \\n для переносов строк внутри instruction:
 {
@@ -660,6 +671,67 @@ ${answersText || 'Ответы не заполнены'}`;
     res.json({ success: true, feedback: text });
   } catch (err) {
     console.error('[feedback] error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DIALOG QUESTION ──────────────────────────────────────────────────────────
+app.post('/api/dialog', async (req, res) => {
+  const { context, moduleId, exId, instruction, answer } = req.body;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+  if (!answer || answer.trim().length < 10) return res.status(400).json({ error: 'Answer too short' });
+
+  const MODULE_TITLES = { gaps: 'Три разрыва', intent: 'Направленный оппортунизм', cascade: 'Каскад целей', independence: 'Независимое мышление' };
+  const EX_LABELS = { ex1: 'Диагностика', ex2: 'Инструмент', ex3: 'Следующий шаг' };
+
+  const systemPrompt = `Ты — куратор воркбука по книге «Искусство действия» Стивена Бангея. Пользователь написал ответ на упражнение. Твоя задача — задать ОДИН уточняющий вопрос, который поможет ему думать глубже.
+
+ПРАВИЛА:
+- Ровно одно предложение — вопрос. Никакого вступления, никаких "Хорошо" или "Интересно".
+- Вопрос должен касаться конкретики из его ответа — не абстрактный, не общий.
+- Не повторяй формулировку из задания.
+- Вопрос должен немного провоцировать: вскрывать допущение, просить пример, или спрашивать "а что мешало раньше?"
+- Максимум 25 слов.
+- Пиши на «ты».`;
+
+  const userMsg = `Модуль: ${MODULE_TITLES[moduleId] || moduleId}
+Упражнение: ${EX_LABELS[exId] || exId}
+Задание: ${instruction || ''}
+
+Контекст:
+Роль: ${context?.role || 'не указана'}
+Бизнес: ${context?.biz || 'не описан'}
+Боль: ${context?.pain || 'не описана'}
+
+Ответ пользователя:
+${answer.trim()}`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 100,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+    clearTimeout(timeout);
+    if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
+    const data = await response.json();
+    const question = data.content?.[0]?.text?.trim() || '';
+    res.json({ success: true, question });
+  } catch (err) {
+    console.error('[dialog] error:', err);
     res.status(500).json({ error: err.message });
   }
 });
