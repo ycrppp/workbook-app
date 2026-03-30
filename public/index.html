@@ -731,16 +731,26 @@
       width: 100%;
       max-width: 680px;
       z-index: 100;
-      background: rgba(20,20,20,0.92);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
       align-items: center;
       justify-content: space-between;
       padding: 14px 1.25rem 40px;
       pointer-events: none;
+    }
+    /* Фон и blur — на псевдоэлементе, не на самом header.
+       Это нужно чтобы mask не обрезал выпадающее меню. */
+    .app-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(20,20,20,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
       mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
     }
+    .app-header > * { position: relative; z-index: 1; }
     body.in-app .app-header { display: flex; }
 
     /* LOGO (top-left) */
