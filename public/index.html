@@ -583,40 +583,27 @@
       line-height: 1.65;
       white-space: pre-line;
     }
-    /* DIALOG */
+    /* DIALOG HINT */
     .dialog-wrap {
-      margin-top: 12px;
-      border-left: 2px solid var(--border);
-      padding-left: 14px;
+      margin-top: 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
       animation: fadeInUp 0.3s ease;
     }
     .dialog-loading {
       font-size: 13px; color: var(--text3);
       display: flex; align-items: center; gap: 8px;
     }
+    .dialog-hint-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text3); margin-bottom: 5px;
+    }
     .dialog-question {
-      font-size: 14px; color: var(--text2);
-      line-height: 1.6; margin-bottom: 10px;
+      font-size: 13px; color: var(--text2);
+      line-height: 1.6;
     }
-    .dialog-question::before {
-      content: '→ ';
-      color: var(--accent);
-      font-weight: 600;
-    }
-    .dialog-reply {
-      width: 100%; box-sizing: border-box;
-      background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text);
-      font-size: 13px; padding: 10px 12px;
-      resize: vertical; min-height: 60px; line-height: 1.5;
-      font-family: inherit;
-    }
-    .dialog-reply:focus { outline: none; border-color: var(--accent-mid); }
-    .dialog-reply-saved {
-      font-size: 11px; color: var(--success);
-      opacity: 0; transition: opacity 0.3s; margin-top: 4px;
-    }
-    .dialog-reply-saved.show { opacity: 1; }
     /* STAR RATING */
     .star-rating { display: flex; gap: 6px; margin: 1rem 0 0.25rem; }
     .star-rating .star {
@@ -2280,14 +2267,10 @@ function renderModule(data) {
     // Build dialog HTML from cache (if exists)
     let dialogHtml = '';
     if (cached && cached.question) {
-      const replyVal = cached.reply ? cached.reply.replace(/"/g, '&quot;') : '';
       dialogHtml = `
         <div class="dialog-wrap" id="dialog-${exId}">
+          <div class="dialog-hint-label">Уточни свой ответ</div>
           <div class="dialog-question">${cached.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-          <textarea class="dialog-reply" rows="2" placeholder="Необязательно — но полезно..."
-            id="dreply-${exId}"
-            onblur="saveDialogReply('${exId}', this.value)">${replyVal}</textarea>
-          <div class="dialog-reply-saved" id="dreply-saved-${exId}">✓ Сохранено</div>
         </div>`;
     } else {
       dialogHtml = `<div class="dialog-wrap" id="dialog-${exId}" style="display:none"></div>`;
@@ -2367,7 +2350,7 @@ async function triggerDialog(exId, answerText) {
 
   // Show loading
   wrap.style.display = 'block';
-  wrap.innerHTML = `<div class="dialog-loading"><span class="spinner"></span> Думаю над вопросом...</div>`;
+  wrap.innerHTML = `<div class="dialog-loading"><span class="spinner"></span> Формулирую подсказку...</div>`;
 
   const token = localStorage.getItem('auth_token');
   try {
@@ -2392,11 +2375,8 @@ async function triggerDialog(exId, answerText) {
 
     // Render question + reply textarea
     wrap.innerHTML = `
-      <div class="dialog-question">${data.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-      <textarea class="dialog-reply" rows="2" placeholder="Необязательно — но полезно..."
-        id="dreply-${exId}"
-        onblur="saveDialogReply('${exId}', this.value)"></textarea>
-      <div class="dialog-reply-saved" id="dreply-saved-${exId}">✓ Сохранено</div>`;
+      <div class="dialog-hint-label">Уточни свой ответ</div>
+      <div class="dialog-question">${data.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
   } catch (e) {
     wrap.style.display = 'none';
   }
