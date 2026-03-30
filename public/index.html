@@ -2138,7 +2138,7 @@ async function openModule(moduleId, regenCorrection) {
   const fb = document.getElementById('feedback-block');
   if (fb) { fb.style.display = 'none'; fb.innerHTML = ''; }
   const nb = document.getElementById('next-mod-btn');
-  if (nb) { nb.textContent = 'Сохранить и продолжить →'; }
+  if (nb) { nb.textContent = 'Сохранить и продолжить →'; nb.style.display = ''; }
 
   // Используем кэш если есть и пересоздание не запрошено
   const cached = state.exerciseCache[moduleId];
@@ -2256,6 +2256,15 @@ function checkAllAnswered() {
 }
 
 // ─── COMPLETE MODULE ──────────────────────────────────────────────────────────
+function editAnswers() {
+  // Скрываем фидбек, возвращаем основную кнопку, скроллим к упражнениям
+  const block = document.getElementById('feedback-block');
+  const btn   = document.getElementById('next-mod-btn');
+  if (block) { block.style.display = 'none'; block.innerHTML = ''; }
+  if (btn)   { btn.style.display = ''; btn.textContent = 'Сохранить и продолжить →'; }
+  document.getElementById('exercises-container')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // ─── MODULE FEEDBACK ──────────────────────────────────────────────────────────
 async function requestFeedback() {
   const btn = document.getElementById('next-mod-btn');
@@ -2287,16 +2296,26 @@ async function requestFeedback() {
     });
     const data = await resp.json();
     if (data.feedback) {
-      block.innerHTML = `<div class="feedback-box"><div class="feedback-label">Обратная связь</div>${data.feedback.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+      block.innerHTML = `
+        <div class="feedback-box">
+          <div class="feedback-label">Обратная связь</div>
+          <div>${data.feedback.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <div style="display:flex;gap:10px;margin-top:1.25rem;">
+            <button class="btn" style="flex:1" onclick="editAnswers()">← Изменить ответы</button>
+            <button class="btn primary" style="flex:1" onclick="completeModule()">Продолжить →</button>
+          </div>
+        </div>`;
       block.style.display = 'block';
       block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   } catch (e) {
     // Если запрос упал — не блокируем пользователя, просто завершаем модуль
+    completeModule();
+    return;
   }
 
   btn.disabled = false;
-  btn.textContent = 'Продолжить →';
+  btn.style.display = 'none'; // прячем основную кнопку — она заменена кнопками внутри фидбека
 }
 
 function completeModule() {
