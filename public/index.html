@@ -17,18 +17,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #141414;
-      --bg2: #1e1e1e;
-      --bg3: #282828;
-      --text: #f0efe9;
-      --text2: #888;
-      --text3: #555;
-      --border: #2e2e2e;
-      --border2: #444;
+      --bg: #f4ece1;
+      --bg2: #ede4d6;
+      --bg3: #e5ddd0;
+      --text: #1a1a1a;
+      --text2: #6b6258;
+      --text3: #9a9088;
+      --border: #d4c9bb;
+      --border2: #bfb4a6;
       --accent: #fa471f;
       --accent-light: rgba(250,71,31,0.1);
       --accent-mid: rgba(250,71,31,0.45);
-      --success: #6abf6a;
+      --success: #2d7a2d;
       --radius: 12px;
       --radius-sm: 8px;
     }
@@ -48,8 +48,8 @@
     #welcome-page {
       position: fixed;
       inset: 0;
-      background-color: #0c0c0c;
-      background-image: radial-gradient(ellipse 90% 50% at 50% -5%, rgba(220,90,30,0.15) 0%, transparent 70%);
+      background-color: #f0e8d8;
+      background-image: radial-gradient(ellipse 90% 50% at 50% -5%, rgba(220,90,30,0.12) 0%, transparent 70%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -73,9 +73,9 @@
       font-weight: 400;
       text-transform: uppercase;
       letter-spacing: 0.18em;
-      color: rgba(255,255,255,0.4);
+      color: rgba(0,0,0,0.45);
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(0,0,0,0.15);
       border-radius: 50px;
       padding: 5px 16px;
       margin-bottom: 2rem;
@@ -99,7 +99,7 @@
     .w-title {
       font-size: 34px;
       font-weight: 700;
-      color: #ffffff;
+      color: #1a1a1a;
       text-align: center;
       line-height: 1.2;
       letter-spacing: -0.5px;
@@ -110,7 +110,7 @@
     .w-sub {
       font-size: 16px;
       font-weight: 300;
-      color: rgba(255,255,255,0.5);
+      color: rgba(0,0,0,0.6);
       text-align: center;
       line-height: 1.7;
       letter-spacing: -0.2px;
@@ -123,9 +123,9 @@
       font-size: 15px;
       font-weight: 500;
       border-radius: 50px;
-      background: #ffffff;
-      color: #000000;
-      border: 1px solid #ffffff;
+      background: #1a1a1a;
+      color: #f4ece1;
+      border: 1px solid #1a1a1a;
       cursor: pointer;
       font-family: inherit;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -139,7 +139,7 @@
     .w-hint {
       font-size: 12px;
       font-weight: 300;
-      color: rgba(255,255,255,0.28);
+      color: rgba(0,0,0,0.4);
       margin-bottom: 2.5rem;
       text-align: center;
       letter-spacing: 0.02em;
@@ -160,15 +160,15 @@
       padding: 14px 16px;
       border: none;
       border-radius: 24px;
-      background: rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.04);
       text-align: left;
       flex: 1;
       min-width: 160px;
       max-width: 180px;
     }
     .wf-icon { font-size: 16px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
-    .wf-title { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.85); margin-bottom: 3px; letter-spacing: -0.2px; }
-    .wf-sub { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.4); line-height: 1.55; }
+    .wf-title { font-size: 13px; font-weight: 500; color: rgba(0,0,0,0.85); margin-bottom: 3px; letter-spacing: -0.2px; }
+    .wf-sub { font-size: 12px; font-weight: 300; color: rgba(0,0,0,0.55); line-height: 1.55; }
 
     @media (max-width: 480px) {
       .w-title { font-size: 26px; }
@@ -194,7 +194,7 @@
     }
 
     /* PROGRESS */
-    .progress-wrap { margin-bottom: 1.5rem; padding-top: 56px; }
+    .progress-wrap { margin-bottom: 1.5rem; padding-top: 64px; }
     .progress-bar {
       height: 3px;
       background: var(--border);
@@ -308,9 +308,9 @@
     }
     .btn:hover { background: var(--bg2); }
     .btn.primary {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: #1a1a1a;
+      color: #f4ece1;
+      border-color: #1a1a1a;
       font-weight: 500;
       letter-spacing: -0.2px;
     }
@@ -368,7 +368,7 @@
     .ex-answer { min-height: 120px; }
     .ex-saved {
       font-size: 12px;
-      color: var(--success);
+      color: var(--text3);
       margin-top: 6px;
       opacity: 0;
       transition: opacity 0.3s;
@@ -389,8 +389,8 @@
     }
     .module-item:hover:not(.locked) { border-color: var(--border2); background: var(--bg2); }
     .module-item.locked { opacity: 0.4; cursor: default; }
-    .module-item.current { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
-    .module-item.done { border-color: #2d5a2d; background: #1a2a1a; }
+    .module-item.current { border-color: rgba(0,0,0,0.2); background: rgba(0,0,0,0.04); }
+    .module-item.done { border-color: rgba(0,0,0,0.3); background: rgba(0,0,0,0.05); }
     .module-name { font-size: 14px; font-weight: 500; color: var(--text); }
     .module-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
     .module-badge {
@@ -399,8 +399,8 @@
       border-radius: 20px;
       flex-shrink: 0;
     }
-    .badge-current { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.18); }
-    .badge-done { background: #1a2a1a; color: #6abf6a; border-color: #2d5a2d; }
+    .badge-current { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.7); border: 1px solid rgba(0,0,0,0.15); }
+    .badge-done { background: rgba(0,0,0,0.06); color: var(--text2); border-color: rgba(0,0,0,0.2); }
     .badge-locked { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
     .badge-final { background: rgba(250,71,31,0.1); color: var(--accent); border: 1px solid rgba(250,71,31,0.35); }
     .module-item-final {
@@ -474,6 +474,7 @@
     }
     .char-counter.warn { color: #f97316; }
     .char-counter.ok { color: #4ade80; }
+    .char-counter.ex-ans-counter { margin-bottom: 0; }
 
     /* AI BADGE */
     .ai-badge {
@@ -510,8 +511,8 @@
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--success);
-      background: rgba(106,191,106,0.08);
-      border: 1px solid rgba(106,191,106,0.25);
+      background: rgba(45,122,45,0.08);
+      border: 1px solid rgba(45,122,45,0.25);
       border-radius: 50px;
       padding: 4px 14px;
       margin-bottom: 1rem;
@@ -583,27 +584,6 @@
       line-height: 1.65;
       white-space: pre-line;
     }
-    /* DIALOG HINT */
-    .dialog-wrap {
-      margin-top: 10px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      animation: fadeInUp 0.3s ease;
-    }
-    .dialog-loading {
-      font-size: 13px; color: var(--text3);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .dialog-hint-label {
-      font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--text3); margin-bottom: 5px;
-    }
-    .dialog-question {
-      font-size: 13px; color: var(--text2);
-      line-height: 1.6;
-    }
     /* MINI-CHAT */
     .chat-open-btn {
       margin-top: 10px; background: none; border: none;
@@ -612,6 +592,20 @@
       text-underline-offset: 3px; font-family: inherit;
     }
     .chat-open-btn:hover { color: var(--text2); }
+    @keyframes chatBtnSweep {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    .chat-open-btn.sweep {
+      background: linear-gradient(90deg, var(--text3) 0%, var(--accent) 40%, var(--text3) 70%);
+      background-size: 300% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-decoration-color: var(--text3);
+      animation: chatBtnSweep 2.2s ease forwards;
+    }
     .chat-panel {
       margin-top: 12px; border: 1px solid var(--border);
       border-radius: 10px; overflow: hidden;
@@ -711,6 +705,19 @@
       color: var(--text3);
       margin-bottom: 0.75rem;
     }
+    .wb-feedback-section {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .wb-book-input {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-size: 13px; padding: 10px 12px;
+      font-family: inherit;
+    }
+    .wb-book-input:focus { outline: none; border-color: var(--accent-mid); }
 
     /* EDIT CONTEXT LINK */
     .edit-ctx {
@@ -821,28 +828,36 @@
       display: none;
       position: fixed;
       top: 0;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
       width: 100%;
-      max-width: 680px;
       z-index: 100;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 1.25rem 40px;
+      padding: 14px 2rem;
       pointer-events: none;
     }
     /* Фон и blur — на псевдоэлементе, не на самом header.
-       Это нужно чтобы mask не обрезал выпадающее меню. */
+       Это нужно чтобы border-bottom не обрезал выпадающее меню. */
     .app-header::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(20,20,20,0.92);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-      mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+      background: rgba(244,236,225,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       pointer-events: none;
+      z-index: 0;
+    }
+    .app-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 1px;
+      background: rgba(0,0,0,0.25);
       z-index: 0;
     }
     .app-header > * { position: relative; z-index: 1; }
@@ -874,16 +889,16 @@
       height: 28px;
       border-radius: 50%;
       object-fit: cover;
-      border: 1.5px solid rgba(255,255,255,0.15);
-      background: #222;
+      border: 1.5px solid rgba(0,0,0,0.15);
+      background: #e0d8cc;
     }
     .user-name {
       font-size: 13px;
       font-weight: 400;
-      color: rgba(255,255,255,0.55);
+      color: rgba(0,0,0,0.6);
       transition: color 0.15s;
     }
-    .user-badge:hover .user-name { color: rgba(255,255,255,0.85); }
+    .user-badge:hover .user-name { color: rgba(0,0,0,0.9); }
     /* мост между бейджем и меню чтобы не терять hover */
     .user-badge::after {
       content: '';
@@ -897,26 +912,26 @@
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      background: #1e1e1e;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: #ede4d6;
+      border: 1px solid rgba(0,0,0,0.12);
       border-radius: 10px;
       min-width: 160px;
       padding: 4px;
       display: none;
       flex-direction: column;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     }
     .user-badge:hover .user-dropdown { display: flex; }
     .user-dropdown-item {
       padding: 9px 14px;
       font-size: 13px;
-      color: rgba(255,255,255,0.75);
+      color: rgba(0,0,0,0.75);
       border-radius: 7px;
       cursor: pointer;
       transition: background 0.1s, color 0.1s;
       white-space: nowrap;
     }
-    .user-dropdown-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    .user-dropdown-item:hover { background: rgba(0,0,0,0.07); color: #1a1a1a; }
     .user-dropdown-item.danger { color: rgba(255,80,60,0.8); }
     .user-dropdown-item.danger:hover { background: rgba(255,60,40,0.1); color: #ff4a35; }
 
@@ -947,13 +962,13 @@
     .project-card {
       padding: 14px 18px;
       border-radius: 12px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.03);
       border: 1px solid transparent;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
     }
-    .project-card:hover { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.12); }
-    .project-card.project-current { background: rgba(255,255,255,0.04); }
+    .project-card:hover { background: rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.10); }
+    .project-card.project-current { background: rgba(0,0,0,0.04); }
     .proj-name-row { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
     .proj-name { font-size: 15px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .proj-edit-btn {
@@ -980,19 +995,19 @@
       border-radius: 4px;
       display: block;
     }
-    .proj-menu-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+    .proj-menu-btn:hover { color: var(--text); background: rgba(0,0,0,0.07); }
     .project-card:hover .proj-menu-btn { opacity: 1; }
     .proj-dropdown {
       position: absolute;
       right: 0;
       top: calc(100% + 4px);
-      background: #1e1e1e;
-      border: 1px solid rgba(255,255,255,0.12);
+      background: #ede4d6;
+      border: 1px solid rgba(0,0,0,0.12);
       border-radius: 8px;
       padding: 4px;
       z-index: 200;
       min-width: 130px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     .proj-dropdown-item {
       padding: 8px 12px;
@@ -1002,7 +1017,7 @@
       color: var(--text);
       white-space: nowrap;
     }
-    .proj-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+    .proj-dropdown-item:hover { background: rgba(0,0,0,0.07); }
     .proj-dropdown-item.danger { color: #f87171; }
     .proj-dropdown-item.danger:hover { background: rgba(248,113,113,0.1); }
     .delete-confirm-overlay {
@@ -1015,8 +1030,8 @@
       justify-content: center;
     }
     .delete-confirm-box {
-      background: #1a1a1a;
-      border: 1px solid rgba(255,255,255,0.1);
+      background: #f4ece1;
+      border: 1px solid rgba(0,0,0,0.12);
       border-radius: 14px;
       padding: 24px;
       max-width: 300px;
@@ -1026,11 +1041,11 @@
     .delete-confirm-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; line-height: 1.5; }
     .delete-confirm-btns { display: flex; gap: 8px; justify-content: flex-end; }
     .proj-meta { font-size: 12px; color: var(--text3); }
-    .proj-done { color: #6abf6a; }
+    .proj-done { color: var(--text2); }
     .proj-rename-input {
       background: transparent;
       border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.25);
+      border-bottom: 1px solid rgba(0,0,0,0.2);
       color: var(--text);
       font-size: 15px;
       font-weight: 500;
@@ -1089,6 +1104,17 @@
     </div>
   </div>
 
+  <div class="delete-confirm-overlay" id="regen-confirm" style="display:none" onclick="closeRegenConfirm()">
+    <div class="delete-confirm-box" onclick="event.stopPropagation()">
+      <div class="delete-confirm-title">Пересоздать упражнения?</div>
+      <div class="delete-confirm-sub">Все ответы, которые ты написал в этом модуле, не сохранятся.</div>
+      <div class="delete-confirm-btns">
+        <button class="btn" onclick="closeRegenConfirm()">Отмена</button>
+        <button class="btn primary" onclick="confirmRegen()">Продолжить</button>
+      </div>
+    </div>
+  </div>
+
   <div class="delete-confirm-overlay" id="delete-confirm" style="display:none" onclick="closeDeleteConfirm()">
     <div class="delete-confirm-box" onclick="event.stopPropagation()">
       <div class="delete-confirm-title">Удалить воркбук?</div>
@@ -1113,8 +1139,12 @@
     <div class="w-title">Искусство действия</div>
     <div class="w-sub">Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом.</div>
 
+    <div id="dev-login-wrap" style="display:none; margin-bottom:1rem;">
+      <button onclick="devLogin()" style="background:transparent; border:1px solid rgba(0,0,0,0.2); color:rgba(0,0,0,0.45); padding:7px 20px; border-radius:50px; font-size:12px; font-weight:400; cursor:pointer; font-family:inherit; letter-spacing:0.04em;">dev login</button>
+    </div>
+
     <div id="tg-login-wrap" style="text-align:center;">
-      <div style="font-size:13px; font-weight:300; color:rgba(255,255,255,0.45); margin-bottom:0.75rem; line-height:1.6; letter-spacing:-0.1px;">
+      <div style="font-size:13px; font-weight:300; color:rgba(0,0,0,0.55); margin-bottom:0.75rem; line-height:1.6; letter-spacing:-0.1px;">
         Авторизуйтесь и подпишитесь на телеграм-канал <a href="https://t.me/m_cult_members" target="_blank" style="color:#fa471f; text-decoration:none;">@m_cult_members</a>, чтобы использовать воркбук
       </div>
       <script async src="https://telegram.org/js/telegram-widget.js?22"
@@ -1133,7 +1163,7 @@
       <div><button class="edit-ctx" onclick="retryAuth()">Я подписался — проверить снова</button></div>
     </div>
     <div class="w-hint">Доступно подписчикам · 4 модуля · ~30 минут каждый</div>
-    <button onclick="openModal('book')" style="margin-top:1rem; margin-bottom:2rem; background:transparent; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); padding:9px 24px; border-radius:50px; font-size:13px; font-weight:400; cursor:pointer; font-family:inherit; letter-spacing:0.02em; transition:all 0.15s;" onmouseover="this.style.borderColor='#fa471f';this.style.color='#fa471f'" onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">Что за книга? →</button>
+    <button onclick="openModal('book')" style="margin-top:1rem; margin-bottom:2rem; background:transparent; border:1px solid rgba(0,0,0,0.2); color:rgba(0,0,0,0.6); padding:9px 24px; border-radius:50px; font-size:13px; font-weight:400; cursor:pointer; font-family:inherit; letter-spacing:0.02em; transition:all 0.15s;" onmouseover="this.style.borderColor='#fa471f';this.style.color='#fa471f'" onmouseout="this.style.borderColor='rgba(0,0,0,0.2)';this.style.color='rgba(0,0,0,0.6)'">Что за книга? →</button>
     <div class="w-features">
       <div class="w-feat">
         <div class="wf-icon">🎯</div>
@@ -1157,13 +1187,13 @@
         </div>
       </div>
     </div>
-    <div style="margin-top:2rem; font-size:12px; color:rgba(255,255,255,0.25); text-align:center; letter-spacing:0.02em; line-height:1.4; max-width:440px; padding-bottom:1rem;">
+    <div style="margin-top:2rem; font-size:12px; color:rgba(0,0,0,0.4); text-align:center; letter-spacing:0.02em; line-height:1.4; max-width:440px; padding-bottom:1rem;">
       Авторизуясь, вы принимаете условия
-      <span onclick="openModal('oferta')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2);">публичной оферты</span>
+      <span onclick="openModal('oferta')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(0,0,0,0.25);">публичной оферты</span>
       и соглашаетесь на обработку персональных данных согласно
-      <span onclick="openModal('privacy')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2);">политике конфиденциальности</span>
+      <span onclick="openModal('privacy')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(0,0,0,0.25);">политике конфиденциальности</span>
       ·
-      <span onclick="openModal('nda')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(255,255,255,0.2);">Соглашение о конфиденциальности данных</span>
+      <span onclick="openModal('nda')" style="cursor:pointer; text-decoration:underline; text-decoration-color:rgba(0,0,0,0.25);">Соглашение о конфиденциальности данных</span>
     </div>
   </div>
 
@@ -1211,7 +1241,7 @@
       <div class="page-sub">Расскажите о себе — все упражнения будут написаны под вашу конкретную ситуацию, а не про абстрактного менеджера.</div>
 
       <div class="section-label">Название воркбука</div>
-      <input type="text" id="workbook-name" placeholder="Например: Мой стартап, Команда продаж..." maxlength="60" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:15px;outline:none;margin-bottom:1.25rem;" onfocus="this.style.borderColor='rgba(255,255,255,0.25)'" onblur="this.style.borderColor='var(--border)'"/>
+      <input type="text" id="workbook-name" placeholder="Например: Мой стартап, Команда продаж..." maxlength="60" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.04);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:15px;outline:none;margin-bottom:1.25rem;" onfocus="this.style.borderColor='rgba(0,0,0,0.25)'" onblur="this.style.borderColor='var(--border)'"/>
 
       <div class="section-label">Кто вы</div>
       <div class="chip-row" id="role-chips">
@@ -1413,7 +1443,21 @@
       <div id="final-plan-section" style="display:none">
         <div class="final-section-label">Твой план действий</div>
         <textarea rows="5" id="final-plan" placeholder="Запиши что именно сделаешь — своими словами..." onblur="saveFinalPlan(this.value)"></textarea>
-        <div class="nav">
+
+        <!-- Workbook rating + feedback + book suggestion -->
+        <div class="wb-feedback-section">
+          <div class="final-section-label">Оцените воркбук</div>
+          <div class="star-rating" id="wb-star-row"></div>
+          <div class="star-hint" id="wb-star-hint" style="margin-bottom:1.25rem;"></div>
+
+          <div class="final-section-label">Ваш отзыв</div>
+          <textarea rows="3" id="wb-feedback" placeholder="Что понравилось, что можно улучшить..." onblur="saveWorkbookFeedback(this.value)" style="width:100%;box-sizing:border-box;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:10px 12px;font-family:inherit;resize:vertical;margin-bottom:1.25rem;"></textarea>
+
+          <div class="final-section-label">Предложить книгу для следующего воркбука</div>
+          <input type="text" class="wb-book-input" id="wb-book-suggest" placeholder="Название и автор" onblur="saveBookSuggestion(this.value)">
+        </div>
+
+        <div class="nav" style="margin-top:1.5rem;">
           <button class="btn" onclick="goStep(3)">← К модулям</button>
           <button class="btn primary" onclick="finishWorkbook()">Завершить →</button>
         </div>
@@ -1800,6 +1844,7 @@ function saveState() {
     correction: state.correction, sessionId: state.sessionId,
     completedModules: state.completedModules,
     answers: state.answers, exerciseCache: state.exerciseCache, feedbackCache: state.feedbackCache, ratingCache: state.ratingCache, dialogCache: state.dialogCache,
+    workbookRating: state.workbookRating, workbookFeedback: state.workbookFeedback, bookSuggestion: state.bookSuggestion,
   };
   if (projectsData.currentProjectId) {
     const idx = projectsData.projects.findIndex(p => p.id === projectsData.currentProjectId);
@@ -1829,6 +1874,9 @@ const state = {
   dialogCache: _cur?.dialogCache || {},
   finalPlan: _cur?.finalPlan || '',
   finalCache: _cur?.finalCache || null,
+  workbookRating: _cur?.workbookRating || 0,
+  workbookFeedback: _cur?.workbookFeedback || '',
+  bookSuggestion: _cur?.bookSuggestion || '',
 };
 
 // ─── PROJECT MANAGEMENT ───────────────────────────────────────────────────────
@@ -1936,6 +1984,9 @@ function selectProject(id) {
   state.feedbackCache = proj.feedbackCache || {};
   state.ratingCache = proj.ratingCache || {};
   state.dialogCache = proj.dialogCache || {};
+  state.workbookRating = proj.workbookRating || 0;
+  state.workbookFeedback = proj.workbookFeedback || '';
+  state.bookSuggestion = proj.bookSuggestion || '';
   updateProjectLabel();
   buildCtxTags('ctx-tags');
   buildCtxTags('mod-ctx-tags');
@@ -1950,6 +2001,7 @@ function createNewProject() {
     role: '', size: '', biz: '', pain: '', correction: '',
     sessionId: 'session_' + Math.random().toString(36).slice(2),
     completedModules: [], answers: {}, exerciseCache: {}, feedbackCache: {}, ratingCache: {}, dialogCache: {},
+    workbookRating: 0, workbookFeedback: '', bookSuggestion: '',
   };
   projectsData.projects.push(proj);
   projectsData.currentProjectId = id;
@@ -1987,6 +2039,19 @@ function showUserBadge(user) {
     avatar.style.display = 'none';
   }
   badge.style.display = 'flex';
+}
+
+async function devLogin() {
+  try {
+    const resp = await fetch('/api/dev-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telegram_id: 1 }) });
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const devUser = { id: 1, first_name: 'Dev', username: 'dev' };
+    localStorage.setItem('tg_user', JSON.stringify(devUser));
+    localStorage.setItem('auth_token', data.token);
+    showUserBadge(devUser);
+    openWorkbook();
+  } catch(e) {}
 }
 
 async function onTelegramAuth(user) {
@@ -2142,6 +2207,23 @@ function updateCounter(fieldId, counterId) {
   const MIN = 30;
   el.textContent = len >= MIN ? `${len} ✓` : `${len} / мин. ${MIN}`;
   el.className = 'char-counter' + (len === 0 ? '' : len < MIN ? ' warn' : ' ok');
+}
+
+function updateExCounter(exId) {
+  const val = document.getElementById('ans-' + exId)?.value.trim() || '';
+  const el = document.getElementById('ans-counter-' + exId);
+  if (!el) return;
+  const len = val.length;
+  const MIN = 100;
+  el.textContent = len === 0 ? `0 / мин. ${MIN}` : len >= MIN ? `${len} ✓` : `${len} / мин. ${MIN}`;
+  el.className = 'char-counter ex-ans-counter';
+
+  const chatBtn = document.getElementById('chat-btn-' + exId);
+  if (!chatBtn) return;
+  if (len < MIN) {
+    chatBtn.style.display = 'none';
+    delete chatBtn.dataset.animated;
+  }
 }
 
 async function submitOnboarding() {
@@ -2332,18 +2414,6 @@ function renderModule(data) {
     const savedVal = state.answers[state.currentModule][exId] || '';
     const cached = (state.dialogCache[state.currentModule] || {})[exId];
 
-    // Build dialog HTML from cache (if exists)
-    let dialogHtml = '';
-    if (cached && cached.question) {
-      dialogHtml = `
-        <div class="dialog-wrap" id="dialog-${exId}">
-          <div class="dialog-hint-label">Уточни свой ответ</div>
-          <div class="dialog-question">${cached.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        </div>`;
-    } else {
-      dialogHtml = `<div class="dialog-wrap" id="dialog-${exId}" style="display:none"></div>`;
-    }
-
     const showChatBtn = savedVal.trim().length >= 30;
     const hasChatHistory = cached?.chat && cached.chat.length > 0;
 
@@ -2356,9 +2426,9 @@ function renderModule(data) {
         <div class="ex-instruction">${ex.instruction}</div>
         <textarea class="ex-answer" rows="5" placeholder="Напишите ответ здесь..." id="ans-${exId}"
           onblur="saveAnswer('${exId}', this.value)"
-          oninput="checkAllAnswered()">${savedVal}</textarea>
+          oninput="checkAllAnswered(); updateExCounter('${exId}')">${savedVal}</textarea>
+        <div class="char-counter ex-ans-counter" id="ans-counter-${exId}"></div>
         <div class="ex-saved" id="saved-${exId}">✓ Сохранено</div>
-        ${dialogHtml}
         <button class="chat-open-btn" id="chat-btn-${exId}" onclick="openDialogChat('${exId}')"
           style="display:${showChatBtn ? 'inline-block' : 'none'}">Разобрать подробнее →</button>
         <div class="chat-panel" id="chat-panel-${exId}" style="display:none">
@@ -2384,6 +2454,7 @@ function renderModule(data) {
   });
 
   checkAllAnswered();
+  ['ex1', 'ex2', 'ex3'].forEach(id => updateExCounter(id));
 
   // Если для этого модуля уже есть сохранённый фидбек — показываем
   const savedFeedback = state.feedbackCache[state.currentModule];
@@ -2402,14 +2473,19 @@ async function saveAnswer(exId, value) {
   const savedEl = document.getElementById('saved-' + exId);
   if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
 
-  if (value.trim().length >= 30) {
-    // Show "discuss" button
+  if (value.trim().length >= 100) {
     const chatBtn = document.getElementById('chat-btn-' + exId);
-    if (chatBtn) chatBtn.style.display = 'inline-block';
-
-    // Trigger hint question (variant B) if not yet shown
-    const cached = (state.dialogCache[state.currentModule] || {})[exId];
-    if (!cached) triggerDialog(exId, value.trim());
+    if (chatBtn) {
+      const wasHidden = chatBtn.style.display === 'none' || chatBtn.style.display === '';
+      chatBtn.style.display = 'inline-block';
+      if (wasHidden && !chatBtn.dataset.animated) {
+        chatBtn.dataset.animated = '1';
+        chatBtn.classList.add('sweep');
+        chatBtn.addEventListener('animationend', () => {
+          chatBtn.classList.remove('sweep');
+        }, { once: true });
+      }
+    }
   }
 
   fetch('/api/answer', {
@@ -2427,62 +2503,9 @@ async function saveAnswer(exId, value) {
 function checkAllAnswered() {
   const answers = ['ex1', 'ex2', 'ex3'].map(id => {
     const el = document.getElementById('ans-' + id);
-    return el && el.value.trim().length > 10;
+    return el && el.value.trim().length >= 100;
   });
   document.getElementById('next-mod-btn').disabled = !answers.every(Boolean);
-}
-
-// ─── DIALOG ───────────────────────────────────────────────────────────────────
-async function triggerDialog(exId, answerText) {
-  const wrap = document.getElementById('dialog-' + exId);
-  if (!wrap) return;
-
-  // Find instruction from the exercise block
-  const textarea = document.getElementById('ans-' + exId);
-  const exBlock = textarea?.closest('.ex-block');
-  const instruction = exBlock?.dataset?.instruction || '';
-
-  // Show loading
-  wrap.style.display = 'block';
-  wrap.innerHTML = `<div class="dialog-loading"><span class="spinner"></span> Формулирую подсказку...</div>`;
-
-  const token = localStorage.getItem('auth_token');
-  try {
-    const resp = await fetch('/api/dialog', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-      body: JSON.stringify({
-        context: { role: state.role, size: state.size, biz: state.biz, pain: state.pain },
-        moduleId: state.currentModule,
-        exId,
-        instruction,
-        answer: answerText,
-      }),
-    });
-    const data = await resp.json();
-    if (!data.question) { wrap.style.display = 'none'; return; }
-
-    // Cache the question
-    if (!state.dialogCache[state.currentModule]) state.dialogCache[state.currentModule] = {};
-    state.dialogCache[state.currentModule][exId] = { question: data.question, reply: '' };
-    saveState();
-
-    // Render question + reply textarea
-    wrap.innerHTML = `
-      <div class="dialog-hint-label">Уточни свой ответ</div>
-      <div class="dialog-question">${data.question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
-  } catch (e) {
-    wrap.style.display = 'none';
-  }
-}
-
-function saveDialogReply(exId, value) {
-  if (!state.dialogCache[state.currentModule]) return;
-  if (!state.dialogCache[state.currentModule][exId]) return;
-  state.dialogCache[state.currentModule][exId].reply = value.trim();
-  saveState();
-  const savedEl = document.getElementById('dreply-saved-' + exId);
-  if (savedEl) { savedEl.classList.add('show'); setTimeout(() => savedEl.classList.remove('show'), 2000); }
 }
 
 // ─── MINI-CHAT ────────────────────────────────────────────────────────────────
@@ -2549,7 +2572,7 @@ async function openDialogChat(exId) {
     saveState();
     renderChatMessages(exId, chatHistory);
   } catch (e) {
-    msgs.innerHTML = '';
+    msgs.innerHTML = `<div class="chat-msg chat-msg-ai" style="color:var(--text3)">Сервис временно перегружен — попробуй через минуту.</div>`;
   }
   if (sendBtn) sendBtn.disabled = false;
 }
@@ -2925,6 +2948,58 @@ function showFinalContent(data) {
   document.getElementById('final-task-body').textContent = data.task_body || '';
   document.getElementById('final-content').style.display = '';
   document.getElementById('final-plan-section').style.display = '';
+  renderWorkbookRating();
+  const fbEl = document.getElementById('wb-feedback');
+  if (fbEl) fbEl.value = state.workbookFeedback || '';
+  const bookEl = document.getElementById('wb-book-suggest');
+  if (bookEl) bookEl.value = state.bookSuggestion || '';
+}
+
+const WB_STAR_HINTS = ['Не помогло', 'Слабовато', 'Нормально', 'Полезно', 'Очень полезно'];
+
+function renderWorkbookRating() {
+  const saved = state.workbookRating || 0;
+  const row = document.getElementById('wb-star-row');
+  if (!row) return;
+  row.innerHTML = [1,2,3,4,5].map(i =>
+    `<span class="star ${i <= saved ? 'active' : ''}" onclick="setWorkbookRating(${i})" onmouseover="hoverWorkbookRating(${i})" onmouseout="unhoverWorkbookRating()">★</span>`
+  ).join('');
+  const hint = document.getElementById('wb-star-hint');
+  if (hint) hint.textContent = saved ? WB_STAR_HINTS[saved-1] : '';
+}
+
+function setWorkbookRating(n) {
+  state.workbookRating = n;
+  saveState();
+  const stars = document.querySelectorAll('#wb-star-row .star');
+  stars.forEach((s, i) => s.classList.toggle('active', i < n));
+  const hint = document.getElementById('wb-star-hint');
+  if (hint) hint.textContent = WB_STAR_HINTS[n-1];
+}
+
+function hoverWorkbookRating(n) {
+  const stars = document.querySelectorAll('#wb-star-row .star');
+  stars.forEach((s, i) => s.style.color = i < n ? 'var(--accent)' : '');
+  const hint = document.getElementById('wb-star-hint');
+  if (hint) hint.textContent = WB_STAR_HINTS[n-1];
+}
+
+function unhoverWorkbookRating() {
+  const saved = state.workbookRating || 0;
+  const stars = document.querySelectorAll('#wb-star-row .star');
+  stars.forEach((s, i) => { s.style.color = ''; s.classList.toggle('active', i < saved); });
+  const hint = document.getElementById('wb-star-hint');
+  if (hint) hint.textContent = saved ? WB_STAR_HINTS[saved-1] : '';
+}
+
+function saveWorkbookFeedback(value) {
+  state.workbookFeedback = value;
+  saveState();
+}
+
+function saveBookSuggestion(value) {
+  state.bookSuggestion = value;
+  saveState();
 }
 
 function saveFinalPlan(value) {
@@ -2933,10 +3008,12 @@ function saveFinalPlan(value) {
 }
 
 function finishWorkbook() {
-  // Save the plan if any text
   const planEl = document.getElementById('final-plan');
   if (planEl) saveFinalPlan(planEl.value);
-  // Go back to module list — all 4 shown as done
+  const fbEl = document.getElementById('wb-feedback');
+  if (fbEl) saveWorkbookFeedback(fbEl.value);
+  const bookEl = document.getElementById('wb-book-suggest');
+  if (bookEl) saveBookSuggestion(bookEl.value);
   goStep(3);
 }
 
@@ -2956,12 +3033,22 @@ function hideRegenForm() {
   }
 }
 
-async function regenWithCorrection() {
+function regenWithCorrection() {
   const correction = document.getElementById('regen-correction').value.trim();
   if (!correction) return;
-  // Очищаем ответы и кэш чтобы пересоздание было явным
+  document.getElementById('regen-confirm').style.display = 'flex';
+}
+
+function closeRegenConfirm() {
+  document.getElementById('regen-confirm').style.display = 'none';
+}
+
+async function confirmRegen() {
+  closeRegenConfirm();
+  const correction = document.getElementById('regen-correction').value.trim();
   delete state.answers[state.currentModule];
   delete state.exerciseCache[state.currentModule];
+  delete state.dialogCache[state.currentModule];
   saveState();
   await openModule(state.currentModule, correction);
 }
@@ -3044,6 +3131,14 @@ async function regenWithCorrection() {
       else if (cur && (cur.biz || cur.pain)) { goStep(3); }
       else { renderProjects(); goStep(0); }
     }
+  } catch(e) {}
+})();
+
+// Показываем dev-кнопку если сервер запущен с DEV_MODE=true
+(async function() {
+  try {
+    const r = await fetch('/api/dev-auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    if (r.ok) document.getElementById('dev-login-wrap').style.display = 'block';
   } catch(e) {}
 })();
 </script>
