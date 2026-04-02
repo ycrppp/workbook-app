@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/state';
-import KinematicText from '@/components/KinematicText';
 
 type AuthStep = 'idle' | 'waiting' | 'expired';
 
@@ -136,8 +135,8 @@ export default function WelcomePage() {
         </div>
         <div className="w-badge">Воркбук · <em>Стивен Бангей</em></div>
         <div className="w-icon">📖</div>
-        <KinematicText text="Искусство действия" className="w-title" />
-        <KinematicText text="Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом." className="w-sub" />
+        <h1 className="w-title">Искусство действия</h1>
+        <p className="w-sub">Персональные упражнения по книге — сгенерированные AI под вашу конкретную ситуацию. Не шаблоны, а работа с вашим реальным контекстом.</p>
 
         <div ref={devBtnRef} style={{ display: 'none', marginBottom: '1rem' }}>
           <button
