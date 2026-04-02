@@ -155,7 +155,7 @@ export default function WelcomePage() {
               </div>
               <button
                 onClick={handleBotLogin}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#2AABEE', color: '#fff', border: 'none', padding: '11px 28px', borderRadius: '50px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '-0.01em' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fa471f', color: '#fff', border: 'none', padding: '11px 28px', borderRadius: '50px', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '-0.01em' }}
               >
                 <TelegramIcon />
                 Войти через Telegram
