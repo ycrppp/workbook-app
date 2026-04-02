@@ -629,17 +629,16 @@
       border-top: 1px solid var(--border); background: var(--bg2);
       align-items: flex-end;
     }
-    .chat-correction-row {
-      display: flex; gap: 8px; padding: 8px 12px;
-      border-top: 1px solid var(--border); background: var(--bg);
-      align-items: flex-end;
+    .chat-update-answer-btn {
+      display: block; width: calc(100% - 24px); margin: 0 12px 10px;
+      padding: 8px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text2); font-size: 13px; font-family: inherit;
+      cursor: pointer; text-align: center;
+      transition: border-color 0.15s, color 0.15s;
     }
-    .chat-correction-row::before {
-      content: '✏️';
-      font-size: 12px;
-      line-height: 1;
-      padding-bottom: 6px;
-      flex-shrink: 0;
+    .chat-update-answer-btn:hover {
+      border-color: var(--accent); color: var(--accent);
     }
     .chat-input {
       flex: 1; background: transparent; border: none;

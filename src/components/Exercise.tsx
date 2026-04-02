@@ -22,6 +22,7 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
   const [showChat, setShowChat] = useState(false);
   const chatBtnRef = useRef<HTMLButtonElement>(null);
   const animatedRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const ans = currentProject?.answers?.[`${moduleId}_${exId}`] || '';
@@ -79,6 +80,7 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
       <div className="ex-body">
         <div className="ex-instruction">{instruction}</div>
         <textarea
+          ref={textareaRef}
           className="ex-answer"
           rows={5}
           placeholder="Напишите ответ здесь..."
@@ -95,15 +97,9 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
             moduleId={moduleId}
             instruction={instruction}
             userAnswer={value}
-            onUpdateAnswer={(newAnswer) => {
-              setValue(newAnswer);
-              updateCurrentProject((p) => ({
-                ...p,
-                answers: { ...p.answers, [`${moduleId}_${exId}`]: newAnswer },
-              }));
-              syncToServer();
-              setSaved(true);
-              setTimeout(() => setSaved(false), 2000);
+            onFocusAnswer={() => {
+              textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setTimeout(() => textareaRef.current?.focus(), 300);
             }}
           />
         )}

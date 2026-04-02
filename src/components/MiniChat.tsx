@@ -13,7 +13,7 @@ interface MiniChatProps {
   moduleId: string;
   instruction: string;
   userAnswer: string;
-  onUpdateAnswer?: (newAnswer: string) => void;
+  onFocusAnswer?: () => void;
 }
 
 function chatMarkdown(text: string) {
@@ -23,16 +23,14 @@ function chatMarkdown(text: string) {
     .replace(/`(.+?)`/g, '<code>$1</code>');
 }
 
-export default function MiniChat({ exId, moduleId, instruction, userAnswer, onUpdateAnswer }: MiniChatProps) {
+export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFocusAnswer }: MiniChatProps) {
   const { currentProject, authToken, updateCurrentProject } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [correction, setCorrection] = useState('');
   const msgsRef = useRef<HTMLDivElement>(null);
 
-  // Load cached chat on mount
   useEffect(() => {
     const cached = currentProject?.dialogCache?.[moduleId]?.[exId];
     if (cached?.chat) setMessages(cached.chat);
@@ -157,29 +155,13 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onUp
               {loading ? '...' : '↑'}
             </button>
           </div>
-
-          {onUpdateAnswer && (
-            <div className="chat-correction-row">
-              <textarea
-                className="chat-input"
-                rows={2}
-                placeholder="Скорректированный ответ — обновит поле выше..."
-                value={correction}
-                onChange={(e) => setCorrection(e.target.value)}
-              />
-              <button
-                className="chat-send-btn"
-                style={{ background: 'var(--accent)', color: '#fff' }}
-                disabled={!correction.trim()}
-                onClick={() => {
-                  if (correction.trim()) {
-                    onUpdateAnswer(correction.trim());
-                    setCorrection('');
-                  }
-                }}
-                title="Обновить ответ"
-              >↑</button>
-            </div>
+          {onFocusAnswer && (
+            <button
+              className="chat-update-answer-btn"
+              onClick={onFocusAnswer}
+            >
+              ✏️ Обновить ответ
+            </button>
           )}
         </div>
       )}
