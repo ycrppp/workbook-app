@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
         first_name: session.firstName,
         last_name: session.lastName,
         username: session.username,
+        photo_url: session.photoUrl,
       },
     });
   }

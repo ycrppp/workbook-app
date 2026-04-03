@@ -24,7 +24,7 @@ export default function Header() {
         {tgUser.photo_url && (
           <img className="user-avatar" src={tgUser.photo_url} alt="" />
         )}
-        <span className="user-name">{tgUser.first_name}</span>
+        <span className="user-name">{[tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')}</span>
         <div className="user-dropdown">
           <div className="user-dropdown-item" onClick={() => router.push('/projects')}>
             Мои воркбуки

@@ -9,6 +9,7 @@ export interface BotSession {
   firstName?: string;
   lastName?: string;
   username?: string;
+  photoUrl?: string;
   authToken?: string;
 }
 

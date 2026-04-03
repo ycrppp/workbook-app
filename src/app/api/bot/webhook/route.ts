@@ -54,7 +54,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    sessions.confirm(token, { telegramId, chatId, firstName, lastName, username, authToken });
+    const photoUrl = await getTelegramPhotoUrl(telegramId);
+    sessions.confirm(token, { telegramId, chatId, firstName, lastName, username, photoUrl, authToken });
 
     await sendMessage(
       chatId,
@@ -65,6 +66,24 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
+}
+
+async function getTelegramPhotoUrl(userId: number): Promise<string | undefined> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return undefined;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUserProfilePhotos?user_id=${userId}&limit=1`);
+    const data = await res.json();
+    const fileId = data?.result?.photos?.[0]?.[0]?.file_id;
+    if (!fileId) return undefined;
+    const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+    const fileData = await fileRes.json();
+    const filePath = fileData?.result?.file_path;
+    if (!filePath) return undefined;
+    return `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+  } catch {
+    return undefined;
+  }
 }
 
 async function sendMessage(chatId: number, text: string) {
