@@ -14,7 +14,7 @@ const EX_GOAL: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  const { context, moduleId, exId, instruction, userAnswer, messages } = await req.json();
+  const { context, moduleId, exId, instruction, userAnswer, previousAnswers, messages } = await req.json();
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
 
@@ -29,8 +29,12 @@ export async function POST(req: NextRequest) {
 
 Контекст пользователя:
 Роль: ${context?.role || 'не указана'}
+Размер команды: ${context?.size || 'не указан'}
 Бизнес: ${context?.biz || 'не описан'}
 Боль: ${context?.pain || 'не описана'}
+${previousAnswers && Object.keys(previousAnswers).length > 0
+  ? `\nПредыдущие ответы в этом модуле (фоновый контекст — используй чтобы точнее понимать ситуацию, не обсуждай их напрямую):\n${Object.entries(previousAnswers).map(([k, v]) => `${EX_LABELS[k] || k}: ${v}`).join('\n')}`
+  : ''}
 
 Его ответ на упражнение:
 ${(userAnswer || '').trim()}

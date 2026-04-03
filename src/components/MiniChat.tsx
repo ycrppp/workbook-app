@@ -16,6 +16,18 @@ interface MiniChatProps {
   onFocusAnswer?: () => void;
 }
 
+function getPreviousAnswers(answers: Record<string, string> | undefined, moduleId: string, currentExId: string): Record<string, string> {
+  if (!answers) return {};
+  const order = ['ex1', 'ex2', 'ex3'];
+  const currentIdx = order.indexOf(currentExId);
+  const result: Record<string, string> = {};
+  order.slice(0, currentIdx).forEach((exId) => {
+    const key = `${moduleId}_${exId}`;
+    if (answers[key]?.trim()) result[exId] = answers[key].trim();
+  });
+  return result;
+}
+
 function chatMarkdown(text: string) {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -64,11 +76,12 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
-          context: { role: currentProject?.role, biz: currentProject?.biz, pain: currentProject?.pain },
+          context: { role: currentProject?.role, size: currentProject?.size, biz: currentProject?.biz, pain: currentProject?.pain },
           moduleId,
           exId,
           instruction,
           userAnswer,
+          previousAnswers: getPreviousAnswers(currentProject?.answers, moduleId, exId),
           messages: [],
         }),
       });
@@ -100,11 +113,12 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
         body: JSON.stringify({
-          context: { role: currentProject?.role, biz: currentProject?.biz, pain: currentProject?.pain },
+          context: { role: currentProject?.role, size: currentProject?.size, biz: currentProject?.biz, pain: currentProject?.pain },
           moduleId,
           exId,
           instruction,
           userAnswer,
+          previousAnswers: getPreviousAnswers(currentProject?.answers, moduleId, exId),
           messages: newMsgs,
         }),
       });
