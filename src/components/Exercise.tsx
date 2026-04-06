@@ -20,8 +20,6 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const chatBtnRef = useRef<HTMLButtonElement>(null);
-  const animatedRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -60,19 +58,6 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
-
-  const triggerSweep = (btn: HTMLButtonElement) => {
-    if (animatedRef.current) return;
-    animatedRef.current = true;
-    btn.classList.add('sweep');
-    btn.addEventListener('animationend', () => btn.classList.remove('sweep'), { once: true });
-  };
-
-  useEffect(() => {
-    if (showChat && chatBtnRef.current && !animatedRef.current) {
-      triggerSweep(chatBtnRef.current);
-    }
-  }, [showChat]);
 
   return (
     <div className="ex-block">
