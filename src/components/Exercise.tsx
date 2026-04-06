@@ -37,7 +37,6 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
     const trimLen = val.trim().length;
     if (trimLen < MIN_CHARS) {
       setShowChat(false);
-      animatedRef.current = false;
     }
     onAnswerChange?.();
   };
@@ -52,7 +51,6 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
 
     if (trimmed.length >= MIN_CHARS && !showChat) {
       setShowChat(true);
-      animatedRef.current = false;
     }
 
     setSaved(true);
