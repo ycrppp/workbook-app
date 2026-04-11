@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useApp } from '@/lib/state';
 import { BOOKS } from '@/lib/books';
@@ -8,13 +8,21 @@ import Header from '@/components/Header';
 import Exercise from '@/components/Exercise';
 import ProgressBar from '@/components/ProgressBar';
 
+type ExData = { title: string; instruction: string };
+
 export default function ModulePage() {
   const router = useRouter();
   const { id: moduleId } = useParams<{ id: string }>();
   const { tgUser, authToken, currentProject, updateCurrentProject, syncToServer, ready } = useApp();
 
-  const [loading, setLoading] = useState(false);
-  const [exercises, setExercises] = useState<any>(null);
+  const [loadingEx1, setLoadingEx1] = useState(false);
+  const [loadingEx2, setLoadingEx2] = useState(false);
+  const [loadingEx3, setLoadingEx3] = useState(false);
+  const [intro, setIntro] = useState('');
+  const [ex1Data, setEx1Data] = useState<ExData | null>(null);
+  const [ex2Data, setEx2Data] = useState<ExData | null>(null);
+  const [ex3Data, setEx3Data] = useState<ExData | null>(null);
+
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -27,6 +35,10 @@ export default function ModulePage() {
   const module = BOOKS.bangey.modules.find((m) => m.id === moduleId);
   const moduleIndex = BOOKS.bangey.modules.findIndex((m) => m.id === moduleId);
 
+  // Prevent double-triggering adaptive generation
+  const generatingEx2 = useRef(false);
+  const generatingEx3 = useRef(false);
+
   useEffect(() => {
     if (!ready) return;
     if (!tgUser || !authToken) { router.push('/'); return; }
@@ -37,7 +49,7 @@ export default function ModulePage() {
 
   useEffect(() => {
     checkAllAnswered();
-  }, [exercises, currentProject?.answers]);
+  }, [ex1Data, ex2Data, ex3Data, currentProject?.answers]);
 
   const checkAllAnswered = () => {
     if (!currentProject) return;
@@ -48,63 +60,134 @@ export default function ModulePage() {
     setAllAnswered(all);
   };
 
+  const getPreviousAnswers = () => {
+    if (!currentProject) return {};
+    const previousAnswers: Record<string, string> = {};
+    const moduleOrder = ['gaps', 'intent', 'cascade', 'independence'];
+    const idx = moduleOrder.indexOf(moduleId!);
+    moduleOrder.slice(0, idx).forEach((modId) => {
+      ['ex1', 'ex2', 'ex3'].forEach((exId) => {
+        const val = currentProject.answers?.[`${modId}_${exId}`];
+        if (val) previousAnswers[`${modId}_${exId}`] = val;
+      });
+    });
+    return previousAnswers;
+  };
+
   const loadOrGenerate = async () => {
     if (!currentProject) return;
     const cached = currentProject.exerciseCache?.[moduleId!];
-    if (cached) {
-      setExercises(cached);
+
+    if (cached?.ex1) {
+      setIntro(cached.intro || '');
+      setEx1Data(cached.ex1);
+      if (cached.ex2) setEx2Data(cached.ex2);
+      if (cached.ex3) setEx3Data(cached.ex3);
+
       const savedFeedback = currentProject.feedbackCache?.[moduleId!];
       if (savedFeedback) setFeedback(savedFeedback);
-      const savedRating = currentProject.ratingCache?.[moduleId!] || 0;
-      setRating(savedRating);
+      setRating(currentProject.ratingCache?.[moduleId!] || 0);
+
+      // Generate missing adaptive exercises if answers exist
+      const ex1Ans = currentProject.answers?.[`${moduleId}_ex1`] || '';
+      const ex2Ans = currentProject.answers?.[`${moduleId}_ex2`] || '';
+      if (ex1Ans.trim().length >= 100 && !cached.ex2) {
+        await generateEx2(ex1Ans);
+      } else if (ex1Ans.trim().length >= 100 && ex2Ans.trim().length >= 100 && !cached.ex3) {
+        await generateEx3(ex1Ans, ex2Ans);
+      }
       return;
     }
-    await generateExercises();
+
+    await generateEx1();
   };
 
-  const generateExercises = async (correction?: string) => {
-    if (!currentProject) return;
-    setLoading(true);
-    setExercises(null);
-    setFeedback('');
-    try {
-      const previousAnswers: Record<string, string> = {};
-      const moduleOrder = ['gaps', 'intent', 'cascade', 'independence'];
-      const idx = moduleOrder.indexOf(moduleId!);
-      moduleOrder.slice(0, idx).forEach((modId) => {
-        ['ex1', 'ex2', 'ex3'].forEach((exId) => {
-          const val = currentProject.answers?.[`${modId}_${exId}`];
-          if (val) previousAnswers[`${modId}_${exId}`] = val;
-        });
-      });
+  const buildGenerateBody = (extra: object, correction?: string) => ({
+    context: { role: currentProject?.role, size: currentProject?.size, biz: currentProject?.biz, pain: currentProject?.pain },
+    moduleId,
+    bookId: 'bangey',
+    previousAnswers: getPreviousAnswers(),
+    correction: correction || currentProject?.correction || '',
+    ...extra,
+  });
 
+  const generateEx1 = async (correction?: string) => {
+    if (!currentProject) return;
+    setLoadingEx1(true);
+    try {
       const resp = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
-        body: JSON.stringify({
-          context: { role: currentProject.role, size: currentProject.size, biz: currentProject.biz, pain: currentProject.pain },
-          moduleId,
-          bookId: 'bangey',
-          previousAnswers,
-          correction: correction || currentProject.correction || '',
-        }),
+        body: JSON.stringify(buildGenerateBody({ targetEx: 'ex1' }, correction)),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
-      setExercises(data);
-      updateCurrentProject((p) => ({ ...p, exerciseCache: { ...p.exerciseCache, [moduleId!]: data } }));
+      setIntro(data.intro || '');
+      setEx1Data(data.ex1);
+      updateCurrentProject((p) => ({
+        ...p,
+        exerciseCache: { ...p.exerciseCache, [moduleId!]: { intro: data.intro, ex1: data.ex1 } },
+      }));
       syncToServer();
     } catch (err) {
-      console.error('Generate error:', err);
+      console.error('Generate ex1 error:', err);
     }
-    setLoading(false);
+    setLoadingEx1(false);
+  };
+
+  const generateEx2 = async (ex1Answer: string) => {
+    if (!currentProject || generatingEx2.current) return;
+    generatingEx2.current = true;
+    setLoadingEx2(true);
+    try {
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        body: JSON.stringify(buildGenerateBody({ targetEx: 'ex2', currentModuleAnswers: { ex1: ex1Answer } })),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      setEx2Data(data.ex2);
+      updateCurrentProject((p) => ({
+        ...p,
+        exerciseCache: { ...p.exerciseCache, [moduleId!]: { ...p.exerciseCache?.[moduleId!], ex2: data.ex2 } },
+      }));
+      syncToServer();
+    } catch (err) {
+      console.error('Generate ex2 error:', err);
+    }
+    setLoadingEx2(false);
+    generatingEx2.current = false;
+  };
+
+  const generateEx3 = async (ex1Answer: string, ex2Answer: string) => {
+    if (!currentProject || generatingEx3.current) return;
+    generatingEx3.current = true;
+    setLoadingEx3(true);
+    try {
+      const resp = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+        body: JSON.stringify(buildGenerateBody({ targetEx: 'ex3', currentModuleAnswers: { ex1: ex1Answer, ex2: ex2Answer } })),
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      setEx3Data(data.ex3);
+      updateCurrentProject((p) => ({
+        ...p,
+        exerciseCache: { ...p.exerciseCache, [moduleId!]: { ...p.exerciseCache?.[moduleId!], ex3: data.ex3 } },
+      }));
+      syncToServer();
+    } catch (err) {
+      console.error('Generate ex3 error:', err);
+    }
+    setLoadingEx3(false);
+    generatingEx3.current = false;
   };
 
   const handleNextModule = async () => {
     if (!currentProject || !moduleId) return;
     setFeedbackLoading(true);
-
-    // Get feedback from AI
     try {
       const answers = {
         ex1: currentProject.answers?.[`${moduleId}_ex1`] || '',
@@ -142,6 +225,16 @@ export default function ModulePage() {
 
   const confirmRegen = async () => {
     setRegenConfirm(false);
+    const correction = regenCorrection;
+
+    setEx1Data(null);
+    setEx2Data(null);
+    setEx3Data(null);
+    setIntro('');
+    setFeedback('');
+    generatingEx2.current = false;
+    generatingEx3.current = false;
+
     updateCurrentProject((p) => {
       const answers = { ...p.answers };
       ['ex1', 'ex2', 'ex3'].forEach((exId) => delete answers[`${moduleId}_${exId}`]);
@@ -149,10 +242,11 @@ export default function ModulePage() {
       delete exerciseCache[moduleId!];
       const dialogCache = { ...p.dialogCache };
       delete dialogCache[moduleId!];
-      return { ...p, answers, exerciseCache, dialogCache, correction: regenCorrection };
+      return { ...p, answers, exerciseCache, dialogCache, correction };
     });
+
     setShowRegen(false);
-    await generateExercises(regenCorrection);
+    await generateEx1(correction);
     setRegenCorrection('');
   };
 
@@ -165,42 +259,45 @@ export default function ModulePage() {
   if (!ready || !currentProject) return null;
   if (!module) return null;
 
+  const initialLoading = loadingEx1 && !ex1Data;
+
+  const ExSkeleton = ({ index, label }: { index: number; label: string }) => (
+    <div className="ex-block">
+      <div className="ex-header">Упражнение {index} — <span className="spinner" style={{ display: 'inline-block', width: 12, height: 12, borderWidth: 2, verticalAlign: 'middle', marginRight: 6 }} />Генерирую {label}...</div>
+      <div className="ex-body">
+        <div className="skeleton sk-w90" />
+        <div className="skeleton sk-w70" />
+        <div className="skeleton sk-w55" />
+        <div style={{ height: 10 }} />
+        <div className="skeleton sk-w90" />
+        <div className="skeleton sk-w70" />
+      </div>
+    </div>
+  );
+
   return (
     <div className="app-wrap">
       <Header />
-      <ProgressBar step={loading ? 4 : 5} showBack />
+      <ProgressBar step={initialLoading ? 4 : 5} showBack />
       <div className="step active" style={{ paddingTop: 0 }}>
 
-        {/* Header: title + back button */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
           <div className="page-title" style={{ marginBottom: 0 }}>Модуль {moduleIndex + 1} — {module.title}</div>
           <button className="edit-ctx" onClick={() => router.push('/modules')}>← К плану</button>
         </div>
 
-
-
-        {loading && (
+        {initialLoading && (
           <div className="loading-state">
             <div className="loading-title"><span className="spinner" /> Генерирую упражнения...</div>
             <div className="loading-sub">Адаптирую под ваш контекст через AI — это займёт несколько секунд.</div>
-            <div className="ex-block">
-              <div className="ex-header">Загрузка модуля...</div>
-              <div className="ex-body">
-                <div className="skeleton sk-w90" />
-                <div className="skeleton sk-w70" />
-                <div className="skeleton sk-w55" />
-                <div style={{ height: 10 }} />
-                <div className="skeleton sk-w90" />
-                <div className="skeleton sk-w70" />
-              </div>
-            </div>
+            <ExSkeleton index={1} label="диагностику" />
           </div>
         )}
 
-        {!loading && exercises && (
+        {!initialLoading && ex1Data && (
           <>
-            {exercises.intro && (
-              <div className="intro-box" style={{ marginBottom: '1rem' }}>{exercises.intro}</div>
+            {intro && (
+              <div className="intro-box" style={{ marginBottom: '1rem' }}>{intro}</div>
             )}
 
             <div className="quote-block">
@@ -209,7 +306,7 @@ export default function ModulePage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <div className="ai-badge" style={{ marginBottom: 0 }}><span className="ctx-dot" /> Упражнения адаптированы под ваш контекст</div>
+              <div className="ai-badge" style={{ marginBottom: 0 }}><span className="ctx-dot" /> Упражнения адаптируются к вашим ответам</div>
               <button
                 className="info-btn"
                 style={{ width: 'auto', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 500 }}
@@ -217,9 +314,53 @@ export default function ModulePage() {
               >📖 Концепция</button>
             </div>
 
-            <Exercise exId="ex1" exIndex={1} moduleId={moduleId!} title={exercises.ex1?.title || 'Диагностика'} instruction={exercises.ex1?.instruction || ''} onAnswerChange={checkAllAnswered} />
-            <Exercise exId="ex2" exIndex={2} moduleId={moduleId!} title={exercises.ex2?.title || 'Инструмент'} instruction={exercises.ex2?.instruction || ''} onAnswerChange={checkAllAnswered} />
-            <Exercise exId="ex3" exIndex={3} moduleId={moduleId!} title={exercises.ex3?.title || 'Следующий шаг'} instruction={exercises.ex3?.instruction || ''} onAnswerChange={checkAllAnswered} />
+            <Exercise
+              exId="ex1"
+              exIndex={1}
+              moduleId={moduleId!}
+              title={ex1Data.title}
+              instruction={ex1Data.instruction}
+              onAnswerChange={checkAllAnswered}
+              onFirstComplete={(answer) => {
+                if (!ex2Data && !loadingEx2) generateEx2(answer);
+              }}
+            />
+
+            {(loadingEx2 || ex2Data) && (
+              <>
+                {loadingEx2 && <ExSkeleton index={2} label="инструмент" />}
+                {!loadingEx2 && ex2Data && (
+                  <Exercise
+                    exId="ex2"
+                    exIndex={2}
+                    moduleId={moduleId!}
+                    title={ex2Data.title}
+                    instruction={ex2Data.instruction}
+                    onAnswerChange={checkAllAnswered}
+                    onFirstComplete={(answer) => {
+                      const ex1Ans = currentProject?.answers?.[`${moduleId}_ex1`] || '';
+                      if (!ex3Data && !loadingEx3) generateEx3(ex1Ans, answer);
+                    }}
+                  />
+                )}
+              </>
+            )}
+
+            {(loadingEx3 || ex3Data) && (
+              <>
+                {loadingEx3 && <ExSkeleton index={3} label="следующий шаг" />}
+                {!loadingEx3 && ex3Data && (
+                  <Exercise
+                    exId="ex3"
+                    exIndex={3}
+                    moduleId={moduleId!}
+                    title={ex3Data.title}
+                    instruction={ex3Data.instruction}
+                    onAnswerChange={checkAllAnswered}
+                  />
+                )}
+              </>
+            )}
 
             {/* Regen section */}
             <div id="regen-wrap" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
@@ -255,7 +396,7 @@ export default function ModulePage() {
               </div>
             )}
 
-            {/* Always-visible bottom nav */}
+            {/* Bottom nav */}
             <div className="nav" style={{ marginTop: '2rem' }}>
               <button className="btn" onClick={() => router.push('/modules')}>← К плану</button>
               {!feedback ? (
