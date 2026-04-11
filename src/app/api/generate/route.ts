@@ -1,6 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BOOKS, MODULE_TITLES, EX_LABELS } from '@/lib/books';
 
+// Derived from onboarding: role (Фаундер/CEO, Руководитель отдела, Менеджер проекта, Фрилансер, Другое)
+// and size (Только я, 2–5, 6–15, 16–50, 50+)
+function detectScenario(role: string, size: string): 'leader' | 'solo' {
+  if (role === 'Фрилансер') return 'solo';
+  if (size === 'Только я') return 'solo';
+  return 'leader';
+}
+
+// Per-module guidance specific to each scenario.
+// books.ts ПРИМЕНЕНИЕ is written for the leader scenario.
+// Solo overrides are injected here so the AI generates the right exercise variant.
+function getScenarioBlock(scenario: 'leader' | 'solo', moduleId: string, size: string): string {
+  if (scenario === 'solo') {
+    const guidance: Record<string, string> = {
+      gaps: `СЦЕНАРИЙ — СОЛО/ФРИЛАНСЕР:
+Разрывы проявляются между планом пользователя и реальностью клиентов, рынка или подрядчиков — не в команде.
+ex1: где его план расходится с реальностью — клиент изменил требования, рынок не ответил, подрядчик сделал не то.
+ex2: неправильная реакция которую применяет — больше анализа перед стартом, слишком детальные ТЗ, давление на себя.
+ex3: личное поведенческое изменение, конкретный человек не обязателен.`,
+
+      intent: `СЦЕНАРИЙ — СОЛО/ФРИЛАНСЕР:
+Замысел формулируется для своего проекта, клиентской работы или договорённости с партнёром — не для команды.
+ex1: где берётся за работу без понимания зачем — делает что просит клиент без понимания результата, берёт проект без своего намерения.
+ex2: замысел по структуре Бангея для главного текущего проекта или задачи (5 элементов адаптированы к соло — "организация" = проект или клиент).
+ex3: использует замысел для одного конкретного решения по проекту на этой неделе — не "поставить задачу", а "принять решение в рамках своего зачем".`,
+
+      cascade: `СЦЕНАРИЙ — СОЛО/ФРИЛАНСЕР:
+Каскад — про то как ставит задачи клиентам или подрядчикам, не внутренней команде.
+ex1: где говорит клиенту или подрядчику КАК вместо ЗАЧЕМ — отсюда бесконечные согласования, непонимание, переделки.
+ex2: переформулировать одно такое ТЗ или запрос в замысел — только ЧТО и ЗАЧЕМ, без КАК.
+ex3: одна коммуникация с клиентом или подрядчиком на этой неделе — передаёт замысел вместо детальных инструкций.`,
+
+      independence: `СЦЕНАРИЙ — СОЛО/ФРИЛАНСЕР:
+Аудит направлен внутрь — когда сам откладывал решение и шёл за внешним подтверждением.
+ex1: случаи когда сам шёл за согласованием к клиенту или партнёру вместо того чтобы действовать — что помешало?
+ex2: что именно решит самостоятельно в следующий раз и как проверит что это в рамках договорённостей с клиентом.
+ex3: одно конкретное решение которое примет без запроса подтверждения — ситуация и день.`,
+    };
+    return guidance[moduleId] ? `\n${guidance[moduleId]}\n` : '';
+  } else {
+    // leader — supplement books.ts with team-size nuance
+    const sizeNote = size && size !== 'Только я'
+      ? `Размер команды: ${size}. ${size === '2–5' ? 'Личные примеры с конкретными людьми.' : size === '50+' ? 'Системные паттерны, не только личные ситуации.' : ''}`
+      : '';
+    const guidance: Record<string, string> = {
+      gaps: `СЦЕНАРИЙ — РУКОВОДИТЕЛЬ С КОМАНДОЙ: Разрывы между его решениями/планами и тем что делает команда. ${sizeNote}`,
+      intent: `СЦЕНАРИЙ — РУКОВОДИТЕЛЬ С КОМАНДОЙ: Замысел для задач команде или для своей зоны ответственности. ${sizeNote}`,
+      cascade: `СЦЕНАРИЙ — РУКОВОДИТЕЛЬ С КОМАНДОЙ: Ставит задачи команде, подрядчикам или партнёрам. ${sizeNote}`,
+      independence: `СЦЕНАРИЙ — РУКОВОДИТЕЛЬ С КОМАНДОЙ: Люди приходят за решениями вместо самостоятельных действий. ${sizeNote} ex2 — конкретное действие или слова (не декларация "начну доверять").`,
+    };
+    const note = guidance[moduleId] ? `\n${guidance[moduleId]}\n` : '';
+    return note;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { context, moduleId, bookId, previousAnswers, dialogReplies, correction, targetEx, currentModuleAnswers } = await req.json();
 
@@ -33,6 +88,10 @@ export async function POST(req: NextRequest) {
           })
           .join('\n')
       : '';
+
+  // Detect user scenario from onboarding data
+  const scenario = detectScenario(context.role || '', context.size || '');
+  const scenarioBlock = getScenarioBlock(scenario, moduleId, context.size || '');
 
   // Build context from within-module answers for adaptive generation
   let currentModuleAnswersText = '';
@@ -106,7 +165,7 @@ ${module.concept}
 
 ПОЛЕ intro (только для упражнения 1):
 - Два предложения. Первое: через какую идею этого модуля мы смотрим на ситуацию пользователя — коротко и ёмко. Второе: где именно эта идея проявляется в его конкретной боли. Не начинай с названия концепции — начинай с живой фразы.
-
+${scenarioBlock}
 ${prevAnswersText ? 'Предыдущие ответы пользователя — учитывай их, углубляй:\n' + prevAnswersText : ''}
 ${dialogRepliesText ? dialogRepliesText + '\n(Уточнения содержат дополнительный контекст.)' : ''}
 ${currentModuleAnswersText}
