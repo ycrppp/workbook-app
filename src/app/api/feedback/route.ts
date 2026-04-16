@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MODULE_TITLES } from '@/lib/books';
+import { getContextSummary } from '@/lib/scenario';
 
 export async function POST(req: NextRequest) {
   const { context, moduleId, answers } = await req.json();
@@ -32,8 +33,10 @@ export async function POST(req: NextRequest) {
 
 Контекст пользователя:
 Роль: ${context?.role || 'не указана'}
+Размер команды: ${context?.size || 'не указан'}
 Бизнес: ${context?.biz || 'не описан'}
 Боль: ${context?.pain || 'не описана'}
+Сценарий: ${getContextSummary(context?.role || '', context?.size || '')}
 
 Его ответы:
 ${answersText || 'Ответы не заполнены'}`;

@@ -88,12 +88,14 @@ export default function ModulePage() {
       if (savedFeedback) setFeedback(savedFeedback);
       setRating(currentProject.ratingCache?.[moduleId!] || 0);
 
-      // Generate missing adaptive exercises if answers exist
+      // Generate missing adaptive exercises if answers exist.
+      // Two independent checks (not else-if) — ex3 must be reachable when ex2 is already cached.
       const ex1Ans = currentProject.answers?.[`${moduleId}_ex1`] || '';
       const ex2Ans = currentProject.answers?.[`${moduleId}_ex2`] || '';
       if (ex1Ans.trim().length >= 100 && !cached.ex2) {
         await generateEx2(ex1Ans);
-      } else if (ex1Ans.trim().length >= 100 && ex2Ans.trim().length >= 100 && !cached.ex3) {
+      }
+      if (ex1Ans.trim().length >= 100 && ex2Ans.trim().length >= 100 && !cached.ex3) {
         await generateEx3(ex1Ans, ex2Ans);
       }
       return;
@@ -197,7 +199,7 @@ export default function ModulePage() {
       const resp = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
-        body: JSON.stringify({ context: { role: currentProject.role, biz: currentProject.biz, pain: currentProject.pain }, moduleId, answers }),
+        body: JSON.stringify({ context: { role: currentProject.role, size: currentProject.size, biz: currentProject.biz, pain: currentProject.pain }, moduleId, answers }),
       });
       const data = await resp.json();
       if (data.feedback) {
