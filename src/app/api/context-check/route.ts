@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 200,
+        max_tokens: 600,
         messages: [{
           role: 'user',
           content: `Пользователь заполнил анкету для воркбука. Перескажи его ситуацию своими словами — 3–4 коротких предложения. Только то, что он написал. Если он указал что уже пробовал, ставку или историю — обязательно отрази их в пересказе (это критичный контекст). Никаких выводов, советов и оценок. Пиши на «ты».
