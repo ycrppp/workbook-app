@@ -2,6 +2,12 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 
+export interface ThreadState {
+  closed: string;   // что этот модуль закрыл из боли пользователя
+  open: string;     // что осталось открытым для следующих модулей
+  artifact: string; // ключевой конкретный результат который пользователь создал
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -9,12 +15,17 @@ export interface Project {
   size: string;
   biz: string;
   pain: string;
+  painSymptom?: string;   // что именно проявляется (поведение, ситуация)
+  painHistory?: string;   // когда началось, как давно болит
+  painTried?: string;     // что уже пробовал — что не сработало
+  painStakes?: string;    // что произойдёт если не решить
   correction: string;
   sessionId: string;
   completedModules: string[];
   answers: Record<string, string>;
   exerciseCache: Record<string, any>;
   feedbackCache: Record<string, any>;
+  threadStateCache?: Record<string, ThreadState>; // состояние нити по модулям
   ratingCache: Record<string, any>;
   dialogCache: Record<string, any>;
   workbookRating: number;

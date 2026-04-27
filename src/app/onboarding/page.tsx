@@ -18,6 +18,10 @@ export default function OnboardingPage() {
   const [size, setSize] = useState('');
   const [biz, setBiz] = useState('');
   const [pain, setPain] = useState('');
+  const [painTried, setPainTried] = useState('');
+  const [painStakes, setPainStakes] = useState('');
+  const [painHistory, setPainHistory] = useState('');
+  const [showPainDeep, setShowPainDeep] = useState(false);
   const [bizCount, setBizCount] = useState(0);
   const [painCount, setPainCount] = useState(0);
   const [checking, setChecking] = useState(false);
@@ -35,8 +39,15 @@ export default function OnboardingPage() {
       setSize(currentProject.size || '');
       setBiz(currentProject.biz || '');
       setPain(currentProject.pain || '');
+      setPainTried(currentProject.painTried || '');
+      setPainStakes(currentProject.painStakes || '');
+      setPainHistory(currentProject.painHistory || '');
       setBizCount(currentProject.biz?.length || 0);
       setPainCount(currentProject.pain?.length || 0);
+      // Auto-expand deep pain section if any deep field is filled
+      if (currentProject.painTried || currentProject.painStakes || currentProject.painHistory) {
+        setShowPainDeep(true);
+      }
     }
   }, [ready, tgUser, authToken, currentProject?.id]);
 
@@ -49,7 +60,7 @@ export default function OnboardingPage() {
       const resp = await fetch('/api/context-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context: { role, size, biz, pain } }),
+        body: JSON.stringify({ context: { role, size, biz, pain, painTried, painStakes, painHistory } }),
       });
       const data = await resp.json();
       setSummary(data.summary || '');
@@ -66,7 +77,17 @@ export default function OnboardingPage() {
         renameProject(currentProject.id, trimmedName);
       }
     }
-    updateCurrentProject((p) => ({ ...p, role, size, biz, pain, correction }));
+    updateCurrentProject((p) => ({
+      ...p,
+      role,
+      size,
+      biz,
+      pain,
+      painTried: painTried.trim(),
+      painStakes: painStakes.trim(),
+      painHistory: painHistory.trim(),
+      correction,
+    }));
     syncToServer();
     setConfirmed(true);
     setTimeout(() => router.push('/modules'), 300);
@@ -151,6 +172,52 @@ export default function OnboardingPage() {
           onChange={(e) => { setPain(e.target.value); setPainCount(e.target.value.length); }}
         />
         <div className="char-counter">{painCount > 0 ? (painCount < 30 ? `${painCount} / мин. 30` : `${painCount} ✓`) : `0 / мин. 30`}</div>
+
+        {!showPainDeep && (
+          <button
+            type="button"
+            className="edit-ctx"
+            onClick={() => setShowPainDeep(true)}
+            style={{ marginTop: 8 }}
+          >
+            + Углубить боль (необязательно — но упражнения станут точнее)
+          </button>
+        )}
+
+        {showPainDeep && (
+          <div style={{ marginTop: 12, padding: '12px 14px', background: 'rgba(0,0,0,0.03)', borderRadius: 10, border: '1px dashed var(--border)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 10 }}>
+              Эти три вопроса делают упражнения сильнее. AI не будет предлагать то что ты уже пробовал, и учтёт срочность.
+            </div>
+
+            <div className="section-label">Что уже пробовал — и что не сработало?</div>
+            <textarea
+              className="ctx-textarea"
+              rows={2}
+              placeholder="Например: писал инструкции — устаревали к моменту выполнения; нанял проджекта — стал бутылочным горлышком..."
+              value={painTried}
+              onChange={(e) => setPainTried(e.target.value)}
+            />
+
+            <div className="section-label" style={{ marginTop: 12 }}>Что произойдёт если не решить за месяц-два?</div>
+            <textarea
+              className="ctx-textarea"
+              rows={2}
+              placeholder="Например: не закроем Q4, потеряю двух ключевых людей, выгорю и продам долю..."
+              value={painStakes}
+              onChange={(e) => setPainStakes(e.target.value)}
+            />
+
+            <div className="section-label" style={{ marginTop: 12 }}>Когда это началось / как давно болит?</div>
+            <textarea
+              className="ctx-textarea"
+              rows={2}
+              placeholder="Например: после того как наняли двух новых; последние полгода как выросли с 5 до 12..."
+              value={painHistory}
+              onChange={(e) => setPainHistory(e.target.value)}
+            />
+          </div>
+        )}
 
         {error && <div style={{ color: 'var(--accent)', fontSize: 13, marginTop: 8 }}>{error}</div>}
 

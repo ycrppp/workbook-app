@@ -73,7 +73,15 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       },
       body: JSON.stringify({
-        context: { role: currentProject?.role, size: currentProject?.size, biz: currentProject?.biz, pain: currentProject?.pain },
+        context: {
+          role: currentProject?.role,
+          size: currentProject?.size,
+          biz: currentProject?.biz,
+          pain: currentProject?.pain,
+          painTried: currentProject?.painTried,
+          painStakes: currentProject?.painStakes,
+          painHistory: currentProject?.painHistory,
+        },
         moduleId,
         exId,
         instruction,

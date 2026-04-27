@@ -13,21 +13,33 @@ export async function POST(req: NextRequest) {
     answers?.ex3 ? `Следующий шаг: ${answers.ex3.trim()}` : null,
   ].filter(Boolean).join('\n\n');
 
-  const systemPrompt = `Ты — куратор воркбука по книге «Искусство действия» Стивена Бангея. Пользователь только что завершил модуль и ты даёшь короткую обратную связь по его ответам.
+  // Pain layered context if available
+  const painLayers = [
+    context?.pain ? `Боль: ${context.pain}` : null,
+    context?.painSymptom ? `Симптом: ${context.painSymptom}` : null,
+    context?.painHistory ? `История: ${context.painHistory}` : null,
+    context?.painTried ? `Что уже пробовал: ${context.painTried}` : null,
+    context?.painStakes ? `Ставка: ${context.painStakes}` : null,
+  ].filter(Boolean).join('\n');
 
-ТВОЯ ЗАДАЧА — синтез и мост, не коррекция. Ты строишь на том что есть в ответах — не исправляешь и не улучшаешь их.
+  const systemPrompt = `Ты — куратор воркбука по книге «Искусство действия» Стивена Бангея. Пользователь только что завершил модуль и ты даёшь обратную связь и формируешь состояние нити.
 
-ФОРМАТ — строго 2-3 предложения:
-1. Синтез: что главное он увидел в этом модуле — его словами, не своими. Назови конкретное из его ответов.
-2. Мост: одно предложение о том, что следующий модуль добавит к тому что он уже нашёл. Конкретно — через концепцию следующего модуля.
+У тебя ДВЕ задачи:
 
-ЗАПРЕТЫ:
-- Не корректируй ответы — не говори «попробуй сузить», «стоит уточнить», «попробуй переформулировать»
-- Никаких оценок ("хорошо", "отлично", "молодец")
-- Никаких общих фраз ("это важный шаг", "ты на верном пути")
-- Максимум 3 предложения
+1. FEEDBACK — синтез-мост для пользователя (4-6 предложений, видит он):
+   Это не короткая выжимка и не похвала — это мост между модулем который он завершил и его болью. Структура:
+   - Что он реально увидел про свою ситуацию через этот модуль — его словами, опираясь на конкретику из его ответов (что было в ex1, что он создал в ex2, что решил сделать в ex3). Не пересказывай ответы — назови сдвиг.
+   - Что в его боли стало понятнее или сдвинулось благодаря этому модулю — связь с его болью из анкеты, конкретно.
+   - Что осталось открытым в его боли и зачем нужен следующий модуль — не «дальше будет про X», а «вот эта часть твоей боли пока не закрыта, и следующий модуль работает именно с ней».
+   Тон: тёплый, по-человечески, как будто говорит куратор который реально прочитал ответы. Без оценок («хорошо», «молодец», «отличный ответ»), без коррекции («попробуй уточнить»), без общих фраз («важный шаг», «полезное упражнение»). На «ты». Не бойся длины — синтез важнее краткости, но и не растекайся.
 
-Пиши на «ты». Живым языком. Коротко.`;
+2. THREAD STATE — машинно-читаемое состояние нити (для AI следующего модуля, пользователь не видит):
+   - closed: что именно из боли закрылось этим модулем — 1-2 предложения, конкретно
+   - open: что осталось нерешённым из боли, что должны подхватить следующие модули — 1-2 предложения
+   - artifact: самый конкретный результат который пользователь создал в этом модуле — одна фраза (например "замысел для запуска Q4 с 5 элементами Бангея", "список 3 задач где говорю КАК вместо ЗАЧЕМ")
+
+Верни строго JSON без markdown:
+{"feedback": "...", "threadState": {"closed": "...", "open": "...", "artifact": "..."}}`;
 
   const userMsg = `Модуль: ${MODULE_TITLES[moduleId] || moduleId}
 
@@ -35,7 +47,7 @@ export async function POST(req: NextRequest) {
 Роль: ${context?.role || 'не указана'}
 Размер команды: ${context?.size || 'не указан'}
 Бизнес: ${context?.biz || 'не описан'}
-Боль: ${context?.pain || 'не описана'}
+${painLayers || 'Боль не описана'}
 Сценарий: ${getContextSummary(context?.role || '', context?.size || '')}
 
 Его ответы:
@@ -48,13 +60,25 @@ ${answersText || 'Ответы не заполнены'}`;
       method: 'POST',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 300, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 900, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] }),
     });
     clearTimeout(timeout);
     if (!response.ok) throw new Error(`Anthropic error: ${response.status}`);
     const data = await response.json();
-    const text = data.content?.[0]?.text?.trim() || '';
-    return NextResponse.json({ success: true, feedback: text });
+    const raw = data.content?.[0]?.text?.trim() || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    let parsed: { feedback?: string; threadState?: { closed?: string; open?: string; artifact?: string } } = {};
+    try {
+      parsed = JSON.parse(clean);
+    } catch {
+      // Fallback: if model returned plain text instead of JSON, treat all as feedback
+      parsed = { feedback: clean };
+    }
+    return NextResponse.json({
+      success: true,
+      feedback: parsed.feedback || '',
+      threadState: parsed.threadState || null,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

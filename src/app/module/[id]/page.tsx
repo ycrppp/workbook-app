@@ -74,6 +74,18 @@ export default function ModulePage() {
     return previousAnswers;
   };
 
+  const getPreviousThreadStates = () => {
+    if (!currentProject?.threadStateCache) return {};
+    const moduleOrder = ['gaps', 'intent', 'cascade', 'independence'];
+    const idx = moduleOrder.indexOf(moduleId!);
+    const prev: Record<string, any> = {};
+    moduleOrder.slice(0, idx).forEach((modId) => {
+      const ts = currentProject.threadStateCache?.[modId];
+      if (ts) prev[modId] = ts;
+    });
+    return prev;
+  };
+
   const loadOrGenerate = async () => {
     if (!currentProject) return;
     const cached = currentProject.exerciseCache?.[moduleId!];
@@ -105,10 +117,20 @@ export default function ModulePage() {
   };
 
   const buildGenerateBody = (extra: object, correction?: string) => ({
-    context: { role: currentProject?.role, size: currentProject?.size, biz: currentProject?.biz, pain: currentProject?.pain },
+    context: {
+      role: currentProject?.role,
+      size: currentProject?.size,
+      biz: currentProject?.biz,
+      pain: currentProject?.pain,
+      painSymptom: currentProject?.painSymptom,
+      painHistory: currentProject?.painHistory,
+      painTried: currentProject?.painTried,
+      painStakes: currentProject?.painStakes,
+    },
     moduleId,
     bookId: 'bangey',
     previousAnswers: getPreviousAnswers(),
+    previousThreadStates: getPreviousThreadStates(),
     correction: correction || currentProject?.correction || '',
     ...extra,
   });
@@ -199,12 +221,31 @@ export default function ModulePage() {
       const resp = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
-        body: JSON.stringify({ context: { role: currentProject.role, size: currentProject.size, biz: currentProject.biz, pain: currentProject.pain }, moduleId, answers }),
+        body: JSON.stringify({
+          context: {
+            role: currentProject.role,
+            size: currentProject.size,
+            biz: currentProject.biz,
+            pain: currentProject.pain,
+            painSymptom: currentProject.painSymptom,
+            painHistory: currentProject.painHistory,
+            painTried: currentProject.painTried,
+            painStakes: currentProject.painStakes,
+          },
+          moduleId,
+          answers,
+        }),
       });
       const data = await resp.json();
       if (data.feedback) {
         setFeedback(data.feedback);
-        updateCurrentProject((p) => ({ ...p, feedbackCache: { ...p.feedbackCache, [moduleId]: data.feedback } }));
+        updateCurrentProject((p) => ({
+          ...p,
+          feedbackCache: { ...p.feedbackCache, [moduleId]: data.feedback },
+          threadStateCache: data.threadState
+            ? { ...(p.threadStateCache || {}), [moduleId]: data.threadState }
+            : p.threadStateCache,
+        }));
         syncToServer();
       }
     } catch {}
