@@ -11,12 +11,11 @@ interface ExerciseProps {
   title: string;
   instruction: string;
   onAnswerChange?: () => void;
-  onFirstComplete?: (answer: string) => void;
 }
 
 const MIN_CHARS = 100;
 
-export default function Exercise({ exId, exIndex, moduleId, title, instruction, onAnswerChange, onFirstComplete }: ExerciseProps) {
+export default function Exercise({ exId, exIndex, moduleId, title, instruction, onAnswerChange }: ExerciseProps) {
   const { currentProject, updateCurrentProject, syncToServer } = useApp();
   const [value, setValue] = useState('');
   const [saved, setSaved] = useState(false);
@@ -52,7 +51,6 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
 
     if (trimmed.length >= MIN_CHARS && !showChat) {
       setShowChat(true);
-      onFirstComplete?.(trimmed);
     }
 
     setSaved(true);

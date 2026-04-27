@@ -38,6 +38,10 @@ export default function ModulePage() {
   // Prevent double-triggering adaptive generation
   const generatingEx2 = useRef(false);
   const generatingEx3 = useRef(false);
+  const ex2Ref = useRef<HTMLDivElement>(null);
+  const ex3Ref = useRef<HTMLDivElement>(null);
+  const scrollToEx2 = useRef(false);
+  const scrollToEx3 = useRef(false);
 
   useEffect(() => {
     if (!ready) return;
@@ -50,6 +54,20 @@ export default function ModulePage() {
   useEffect(() => {
     checkAllAnswered();
   }, [ex1Data, ex2Data, ex3Data, currentProject?.answers]);
+
+  useEffect(() => {
+    if (ex2Data && scrollToEx2.current) {
+      scrollToEx2.current = false;
+      setTimeout(() => ex2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  }, [ex2Data]);
+
+  useEffect(() => {
+    if (ex3Data && scrollToEx3.current) {
+      scrollToEx3.current = false;
+      setTimeout(() => ex3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  }, [ex3Data]);
 
   const checkAllAnswered = () => {
     if (!currentProject) return;
@@ -364,13 +382,29 @@ export default function ModulePage() {
               title={ex1Data.title}
               instruction={ex1Data.instruction}
               onAnswerChange={checkAllAnswered}
-              onFirstComplete={(answer) => {
-                if (!ex2Data && !loadingEx2) generateEx2(answer);
-              }}
             />
 
+            {(() => {
+              const ex1Ans = currentProject?.answers?.[`${moduleId}_ex1`] || '';
+              if (!ex2Data && !loadingEx2 && ex1Ans.trim().length >= 100) {
+                return (
+                  <button
+                    className="btn primary"
+                    style={{ marginTop: 16, width: '100%' }}
+                    onClick={() => {
+                      scrollToEx2.current = true;
+                      generateEx2(ex1Ans);
+                    }}
+                  >
+                    Перейти к упражнению 2 →
+                  </button>
+                );
+              }
+              return null;
+            })()}
+
             {(loadingEx2 || ex2Data) && (
-              <>
+              <div ref={ex2Ref}>
                 {loadingEx2 && <ExSkeleton index={2} label="инструмент" />}
                 {!loadingEx2 && ex2Data && (
                   <Exercise
@@ -380,17 +414,33 @@ export default function ModulePage() {
                     title={ex2Data.title}
                     instruction={ex2Data.instruction}
                     onAnswerChange={checkAllAnswered}
-                    onFirstComplete={(answer) => {
-                      const ex1Ans = currentProject?.answers?.[`${moduleId}_ex1`] || '';
-                      if (!ex3Data && !loadingEx3) generateEx3(ex1Ans, answer);
-                    }}
                   />
                 )}
-              </>
+              </div>
             )}
 
+            {(() => {
+              const ex2Ans = currentProject?.answers?.[`${moduleId}_ex2`] || '';
+              if (ex2Data && !ex3Data && !loadingEx3 && ex2Ans.trim().length >= 100) {
+                const ex1Ans = currentProject?.answers?.[`${moduleId}_ex1`] || '';
+                return (
+                  <button
+                    className="btn primary"
+                    style={{ marginTop: 16, width: '100%' }}
+                    onClick={() => {
+                      scrollToEx3.current = true;
+                      generateEx3(ex1Ans, ex2Ans);
+                    }}
+                  >
+                    Перейти к упражнению 3 →
+                  </button>
+                );
+              }
+              return null;
+            })()}
+
             {(loadingEx3 || ex3Data) && (
-              <>
+              <div ref={ex3Ref}>
                 {loadingEx3 && <ExSkeleton index={3} label="следующий шаг" />}
                 {!loadingEx3 && ex3Data && (
                   <Exercise
@@ -402,7 +452,7 @@ export default function ModulePage() {
                     onAnswerChange={checkAllAnswered}
                   />
                 )}
-              </>
+              </div>
             )}
 
             {/* Regen section */}
