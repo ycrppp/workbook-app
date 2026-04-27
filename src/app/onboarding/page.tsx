@@ -7,7 +7,6 @@ import ProgressBar from '@/components/ProgressBar';
 import Header from '@/components/Header';
 
 const ROLES = ['Фаундер / CEO', 'Руководитель отдела', 'Менеджер проекта', 'Фрилансер', 'Другое'];
-const SIZES = ['Только я', '2–5', '6–15', '16–50', '50+'];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -146,12 +145,15 @@ export default function OnboardingPage() {
           ))}
         </div>
 
-        <div className="section-label">Размер команды</div>
-        <div className="chip-row">
-          {SIZES.map((s) => (
-            <button key={s} className={`chip ${size === s ? 'selected' : ''}`} onClick={() => setSize(s)}>{s}</button>
-          ))}
-        </div>
+        <div className="section-label">Сколько человек в команде</div>
+        <input
+          type="text"
+          placeholder="Например: 1, 7, 30..."
+          maxLength={20}
+          value={size}
+          onChange={(e) => setSize(e.target.value)}
+          style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', color: 'var(--text)', fontSize: 15, outline: 'none', marginBottom: '1.25rem', fontFamily: 'inherit' }}
+        />
 
         <div className="section-label">Чем занимаетесь</div>
         <textarea
