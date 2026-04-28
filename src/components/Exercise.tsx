@@ -4,6 +4,17 @@ import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/lib/state';
 import MiniChat from './MiniChat';
 
+function renderInstruction(text: string): React.ReactNode {
+  const paragraphs = text.split(/\n\n+/);
+  return paragraphs.map((para, i) => {
+    const parts = para.split(/\*\*(.*?)\*\*/g);
+    const content = parts.map((part, j) =>
+      j % 2 === 1 ? <strong key={j}>{part}</strong> : part.replace(/---/g, '')
+    );
+    return <p key={i} style={{ margin: i === 0 ? 0 : '0.6em 0 0' }}>{content}</p>;
+  });
+}
+
 interface ExerciseProps {
   exId: string;
   exIndex: number;
@@ -61,7 +72,7 @@ export default function Exercise({ exId, exIndex, moduleId, title, instruction, 
     <div className="ex-block">
       <div className="ex-header">Упражнение {exIndex} — {title}</div>
       <div className="ex-body">
-        <div className="ex-instruction">{instruction}</div>
+        <div className="ex-instruction">{renderInstruction(instruction)}</div>
         <textarea
           ref={textareaRef}
           className="ex-answer"

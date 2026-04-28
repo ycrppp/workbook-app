@@ -42,6 +42,7 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const cached = currentProject?.dialogCache?.[moduleId]?.[exId];
@@ -115,12 +116,26 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
     setLoading(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
     if (!text || loading) return;
     const newMsgs: Message[] = [...messages, { role: 'user', text }];
     setMessages(newMsgs);
     setInput('');
+    if (inputRef.current) inputRef.current.style.height = 'auto';
     setLoading(true);
     setSuggestion('');
     try {
@@ -293,11 +308,13 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
             </div>
 
             {/* Input row */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <textarea
+                ref={inputRef}
+                rows={1}
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendMessage(); } }}
+                onChange={handleInputChange}
+                onKeyDown={handleInputKeyDown}
                 placeholder="Ваш ответ..."
                 style={{
                   flex: 1,
@@ -309,6 +326,10 @@ export default function MiniChat({ exId, moduleId, instruction, userAnswer, onFo
                   color: 'var(--text)',
                   outline: 'none',
                   fontFamily: 'inherit',
+                  resize: 'none',
+                  overflowY: 'hidden',
+                  lineHeight: '1.5',
+                  wordBreak: 'break-word',
                 }}
               />
               <button
