@@ -30,7 +30,7 @@ export default function ModuleV2() {
 
   useEffect(() => {
     if (!ready) return;
-    if (!tgUser || !currentProject || !module) { router.push('/modules'); return; }
+    if (!module) { router.push('/modules'); return; }
     generate('ex1', '', '');
   }, [ready, moduleId]);
 
@@ -66,7 +66,7 @@ export default function ModuleV2() {
     }
   };
 
-  if (!ready || !currentProject) return null;
+  if (!ready) return null;
   if (!module) return null;
 
   return (
