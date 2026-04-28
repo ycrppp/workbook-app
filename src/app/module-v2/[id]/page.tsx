@@ -34,26 +34,14 @@ export default function ModuleV2() {
     generate('ex1', '', '');
   }, [ready, moduleId]);
 
-  const ctx = {
-    role: currentProject?.role,
-    size: currentProject?.size,
-    biz: currentProject?.biz,
-    pain: currentProject?.pain,
-    painTried: currentProject?.painTried,
-    painStakes: currentProject?.painStakes,
-  };
-
   const generate = async (action: 'ex1' | 'ex2' | 'ex3', a1: string, a2: string) => {
     setError('');
     setScreen('loading');
     try {
       const resp = await fetch('/api/generate-v2', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({ action, moduleId, context: ctx, ex1Answer: a1, ex2Answer: a2 }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, moduleId, ex1Answer: a1, ex2Answer: a2 }),
       });
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
